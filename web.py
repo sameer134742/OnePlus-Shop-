@@ -19,8 +19,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 APPS = {
-    "starplus":  {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
     "oneplus":   {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
+    "starplus":  {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
     "admin":     {"name": "OnePlus Admin Server", "icon": "⚙️", "color": "#22c55e", "img": "app_fanloader.png"},
 }
 
@@ -39,6 +39,14 @@ def db():
 
 def init_db():
     con = db(); c = con.cursor()
+    # Agar purana schema hai (risk_score missing) to DB delete karo
+    try:
+        c.execute("SELECT risk_score FROM orders LIMIT 1")
+    except:
+        c.execute("DROP TABLE IF EXISTS orders")
+        c.execute("DROP TABLE IF EXISTS keys")
+        con.commit()
+
     c.execute("""CREATE TABLE IF NOT EXISTS keys(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         app TEXT, plan TEXT, key TEXT UNIQUE,
@@ -64,7 +72,6 @@ def admin_required(f):
 
 def calc_risk(utr, name, contact, screenshot):
     score = 0; reasons = []
-    # UTR checks
     if utr:
         fake_utrs = ["1234567890","0000000000","1111111111","123456789012",
                      "test","fake","abc123","123456789","9999999999","2222222222"]
@@ -72,24 +79,15 @@ def calc_risk(utr, name, contact, screenshot):
             score += 60; reasons.append("Fake UTR pattern")
         if len(set(utr)) <= 2:
             score += 40; reasons.append("Same digits repeat")
-        if utr.isdigit() and len(utr) >= 10:
-            try:
-                nums = [int(x) for x in utr]
-                diffs = [nums[i+1]-nums[i] for i in range(len(nums)-1)]
-                if len(set(diffs)) == 1:
-                    score += 50; reasons.append("Sequential UTR")
-            except: pass
         if len(utr) < 12:
             score += 25; reasons.append("UTR chhota")
     if name:
         if len(name) < 3: score += 20; reasons.append("Naam chhota")
-        if re.search(r'[^a-zA-Z\s\.\-]', name): score += 15; reasons.append("Ajeeb characters")
+        if re.search(r'[^a-zA-Z\s\.\-]', name): score += 15; reasons.append("Ajeeb chars")
         if re.search(r'(asdf|qwer|zxcv|hjkl|test|fake|abc)', name.lower()):
-            score += 30; reasons.append("Random/fake naam")
+            score += 30; reasons.append("Fake naam")
     if contact:
         if len(contact) < 5: score += 20; reasons.append("Contact chhota")
-        if not ("@" in contact or contact.replace("+","").replace(" ","").isdigit()):
-            score += 15; reasons.append("Contact invalid")
     if not screenshot: score += 30; reasons.append("Screenshot missing")
     return min(score, 100), " | ".join(reasons)
 
@@ -121,7 +119,7 @@ def create_order():
         if len(name) < 2: return jsonify({"ok": False, "error": "Naam chhota"}), 400
         if len(contact) < 3: return jsonify({"ok": False, "error": "Contact bhejo"}), 400
         if len(utr) < 10 or len(utr) > 30 or not re.match(r'^[A-Za-z0-9]+$', utr):
-            return jsonify({"ok": False, "error": "UTR invalid (min 10, no space)"}), 400
+            return jsonify({"ok": False, "error": "UTR invalid"}), 400
         if not screenshot_data: return jsonify({"ok": False, "error": "Screenshot upload karo"}), 400
 
         screenshot_filename = ""
@@ -134,7 +132,7 @@ def create_order():
             with open(os.path.join(UPLOAD_DIR, screenshot_filename), "wb") as f:
                 f.write(img_bytes)
         except Exception as ex:
-            return jsonify({"ok": False, "error": f"Screenshot fail: {str(ex)}"}), 400
+            return jsonify({"ok": False, "error": f"Screenshot fail"}), 400
 
         con = db(); c = con.cursor()
         c.execute("SELECT id FROM orders WHERE utr=?", (utr,))
