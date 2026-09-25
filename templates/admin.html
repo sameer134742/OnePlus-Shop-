@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+  body { background:#000; color:#fff; padding:16px; min-height:100vh; }
+  .wrap { max-width:900px; margin:0 auto; }
+  .head { display:flex; align-items:center; justify-content:space-between; padding:16px 0; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,.08); flex-wrap:wrap; gap:10px; }
+  .head h1 { font-size:20px; font-weight:900; }
+  .head h1 .red { color:#eb0028; }
+  .logout { padding:8px 16px; background:rgba(235,0,40,.1); color:#eb0028; text-decoration:none; border-radius:8px; font-size:12px; font-weight:800; border:1px solid rgba(235,0,40,.3); }
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:24px; }
+  .stat { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; text-align:center; }
+  .stat .num { font-size:24px; font-weight:900; color:#eb0028; }
+  .stat .lbl { font-size:11px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .section { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:20px; margin-bottom:20px; }
+  .section h2 { font-size:16px; font-weight:900; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .section h2 .count { background:#eb0028; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; }
+  .order { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .order-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+  .order-id { font-size:13px; font-weight:900; color:#eb0028; }
+  .order-app { font-size:11px; padding:3px 9px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .order-row { display:flex; justify-content:space-between; font-size:12px; color:#bbb; padding:3px 0; }
+  .order-row b { color:#fff; font-weight:700; }
+  .order-utr { font-family:monospace; background:rgba(235,0,40,.1); padding:2px 6px; border-radius:4px; font-size:11px; color:#eb0028; }
+  .actions { display:flex; gap:8px; margin-top:12px; }
+  .btn-approve, .btn-reject { flex:1; padding:11px; border:none; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; }
+  .btn-approve { background:#22c55e; color:#fff; }
+  .btn-reject { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid rgba(239,68,68,.3); }
+  .key-box { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:10px 12px; margin-top:10px; }
+  .key-box .label { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .key-box .key { font-family:monospace; font-size:14px; font-weight:800; color:#22c55e; word-break:break-all; margin-top:4px; }
+  .add-form { display:grid; gap:12px; }
+  .add-form select, .add-form textarea { width:100%; padding:11px 13px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#fff; font-size:13px; font-family:inherit; outline:none; }
+  .add-form textarea { min-height:100px; resize:vertical; font-family:monospace; }
+  .add-form button { padding:14px; background:#eb0028; color:#fff; border:none; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
+  .add-form label { font-size:11px; color:#aaa; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+  .stock-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stock-item { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px; text-align:center; }
+  .stock-item .n { font-size:20px; font-weight:900; }
+  .stock-item .n.ok { color:#22c55e; }
+  .stock-item .n.low { color:#f59e0b; }
+  .stock-item .n.zero { color:#ef4444; }
+  .stock-item .app { font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-top:2px; }
+  .stock-item .plan { font-size:11px; font-weight:800; margin-top:2px; }
+  .empty { text-align:center; color:#666; padding:20px; font-size:13px; }
+  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(34,197,94,.95); color:#fff; padding:12px 20px; border-radius:10px; font-weight:700; font-size:13px; z-index:999; display:none; max-width:90vw; text-align:center; }
+  .toast.error { background:rgba(239,68,68,.95); }
+  .toast.show { display:block; }
+  @media (min-width: 600px) {
+    .stats { grid-template-columns:repeat(4,1fr); }
+    .stock-grid { grid-template-columns:repeat(5,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="head">
+  <h1>👑 ONE<span class="red">PLUS</span> Admin Panel</h1>
+  <a class="logout" href="/admin/logout">LOGOUT</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num">{{ pending|length }}</div><div class="lbl">Pending</div></div>
+  <div class="stat"><div class="num">{{ total_sales }}</div><div class="lbl">Sales</div></div>
+  <div class="stat"><div class="num">₹{{ revenue }}</div><div class="lbl">Revenue</div></div>
+  <div class="stat"><div class="num">{{ approved|length }}</div><div class="lbl">Recent</div></div>
+</div>
+
+<div class="section">
+  <h2>📦 Stock</h2>
+  <div class="stock-grid">
+    {% for app_k, app_v in apps.items() %}
+      {% for plan_k, plan_v in plans.items() %}
+        {% set cnt = stock.get(app_k ~ '|' ~ plan_k, 0) %}
+        <div class="stock-item">
+          <div class="n {% if cnt == 0 %}zero{% elif cnt < 5 %}low{% else %}ok{% endif %}">{{ cnt }}</div>
+          <div class="app">{{ app_v.name }}</div>
+          <div class="plan">{{ plan_v.name }}</div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+<div class="section">
+  <h2>➕ Add Keys</h2>
+  <div class="add-form">
+    <div>
+      <label>App</label>
+      <select id="addApp">
+        {% for k, v in apps.items() %}
+        <option value="{{ k }}">{{ v.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Plan</label>
+      <select id="addPlan">
+        {% for k, v in plans.items() %}
+        <option value="{{ k }}">{{ v.name }} — ₹{{ v.price }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Keys (ek line me ek)</label>
+      <textarea id="addKeysText" placeholder="KEY-001&#10;KEY-002&#10;KEY-003"></textarea>
+    </div>
+    <button onclick="addKeys()">+ ADD KEYS</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>⏳ Pending Orders <span class="count">{{ pending|length }}</span></h2>
+  {% if pending %}
+    {% for o in pending %}
+    <div class="order" id="order-{{ o[0] }}">
+      <div class="order-top">
+        <span class="order-id">Order #{{ o[0] }}</span>
+        <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }} · ₹{{ o[3] }}</span>
+      </div>
+      <div class="order-row"><span>👤 Name</span><b>{{ o[4] }}</b></div>
+      <div class="order-row"><span>💬 Contact</span><b>{{ o[5] }}</b></div>
+      <div class="order-row"><span>🧾 UTR</span><span class="order-utr">{{ o[6] }}</span></div>
+      <div class="actions">
+        <button class="btn-approve" onclick="approveOrder({{ o[0] }})">✅ APPROVE</button>
+        <button class="btn-reject" onclick="rejectOrder({{ o[0] }})">❌ REJECT</button>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">✅ Koi pending order nahi</div>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h2>✅ Recently Approved</h2>
+  {% if approved %}
+    {% for o in approved %}
+    <div class="order">
+      <div class="order-top">
+        <span class="order-id">Order #{{ o[0] }}</span>
+        <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }}</span>
+      </div>
+      <div class="order-row"><span>👤 {{ o[3] }}</span><b>{{ o[4] }}</b></div>
+      {% if o[5] %}
+      <div class="key-box">
+        <div class="label">Key Delivered</div>
+        <div class="key">{{ o[5] }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">Abhi tak koi order approve nahi hua</div>
+  {% endif %}
+</div>
+
+{% if rejected %}
+<div class="section">
+  <h2>❌ Rejected</h2>
+  {% for o in rejected %}
+  <div class="order">
+    <div class="order-row"><span>#{{ o[0] }}</span><b>{{ o[3] }} · {{ o[4] }}</b></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg, err) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function addKeys() {
+  const app = document.getElementById('addApp').value;
+  const plan = document.getElementById('addPlan').value;
+  const keys = document.getElementById('addKeysText').value;
+  if (!keys.trim()) { showToast('❌ Keys daalo', true); return; }
+  const res = await fetch('/admin/addkeys', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({app, plan, keys})
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(`✅ ${d.added} keys add hui${d.duplicate ? ', ' + d.duplicate + ' duplicate' : ''}`);
+    document.getElementById('addKeysText').value = '';
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    showToast('❌ ' + d.error, true);
+  }
+}
+
+async function approveOrder(oid) {
+  const res = await fetch('/admin/approve/' + oid, {method:'POST'});
+  const d = await res.json();
+  if (d.ok) {
+    showToast(`✅ Key: ${d.key}`);
+    const el = document.getElementById('order-' + oid);
+    if (el) el.innerHTML = `<div class="key-box"><div class="label">Key Delivered</div><div class="key">${d.key}</div></div>`;
+    setTimeout(() => location.reload(), 2500);
+  } else {
+    showToast('❌ ' + d.error, true);
+  }
+}
+
+async function rejectOrder(oid) {
+  if (!confirm('Reject this order?')) return;
+  const res = await fetch('/admin/reject/' + oid, {method:'POST'});
+  const d = await res.json();
+  if (d.ok) {
+    showToast('✅ Rejected');
+    const el = document.getElementById('order-' + oid);
+    if (el) el.style.opacity = '0.3';
+    setTimeout(() => location.reload(), 1200);
+  }
+}
+</script>
+</body>
+</html>

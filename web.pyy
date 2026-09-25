@@ -1,0 +1,78 @@
+from flask import Flask, render_template, request, jsonify
+import os
+
+app = Flask(__name__)
+
+# ==================== CONFIG ====================
+BOT_USERNAME = "@One_plus_Canter_bot
+"   # bina @ ke
+SUPPORT      = "@Mrsameer46"
+BRAND_NAME   = "OnePlus Store"
+UPI_ID       = "7505804616@ybl"
+
+PLANS = [
+    {
+        "key": "1day",
+        "name": "1 Day",
+        "price": 50,
+        "days": 1,
+        "emoji": "⚡",
+        "tag": "",
+        "features": [
+            "Full premium access",
+            "1 din validity",
+            "Instant key delivery",
+            "24×7 support",
+        ],
+    },
+    {
+        "key": "7day",
+        "name": "7 Days",
+        "price": 499,
+        "days": 7,
+        "emoji": "🔥",
+        "tag": "🔥 Popular",
+        "features": [
+            "Full premium access",
+            "7 din validity",
+            "Instant key delivery",
+            "24×7 support",
+        ],
+    },
+    {
+        "key": "1month",
+        "name": "1 Month",
+        "price": 799,
+        "days": 30,
+        "emoji": "💎",
+        "tag": "💎 Best Value",
+        "features": [
+            "Full premium access",
+            "30 din validity",
+            "Instant key delivery",
+            "24×7 support",
+        ],
+    },
+]
+
+# ==================== ROUTES ====================
+@app.route("/")
+def home():
+    return render_template(
+        "index.html",
+        plans=PLANS,
+        bot=BOT_USERNAME,
+        support=SUPPORT,
+        brand=BRAND_NAME,
+        upi=UPI_ID,
+    )
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "bot": BOT_USERNAME})
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

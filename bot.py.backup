@@ -1,0 +1,1261 @@
+import sqlite3, secrets, string, logging, asyncio, os
+from datetime import datetime, timedelta
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (Application, CommandHandler, MessageHandler,
+                          CallbackQueryHandler, filters, ContextTypes)
+from telegram.constants import ParseMode
+
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
+
+# ==================== CONFIG ====================
+BOT_TOKEN  = "8995307156:AAG3swHLA-Naa8kmkjewCgyLoO4WtFe-AI8"
+ADMIN_IDS  = [6900492704]
+UPI_ID     = "7505804616@ybl"
+QR_PATH    = "qr.png"
+SUPPORT    = "@Mrsameer46"
+
+PLANS = {
+    "1day":   {"name": "1 Day",   "price": 50,  "days": 1,  "emoji": "⚡"},
+    "7day":   {"name": "7 Days",  "price": 499, "days": 7,  "emoji": "🔥"},
+    "1month": {"name": "1 Month", "price": 799, "days": 30, "emoji": "💎"},
+}
+
+# ==================== PREMIUM EMOJI IDs ====================
+# Ye IDs sirf tab kaam karengi jab bot owner ke paas Telegram Premium ho.
+# Warna normal emoji fallback ho jayegi.
+PREMIUM_EMOJIS = {
+    "rocket":  "🚀",
+    "key":     "🔑",
+    "star":    "⭐",
+    "fire":    "🔥",
+    "gem":     "💎",
+    "bolt":    "⚡",
+    "crown":   "👑",
+    "money":   "💰",
+    "check":   "✅",
+    "cross":   "❌",
+    "clock":   "⏳",
+    "party":   "🎉",
+    "bell":    "🔔",
+    "cart":    "🛒",
+    "gift":    "🎁",
+    "shop":    "🏪",
+    "user":    "👤",
+    "id":      "🆔",
+    "phone":   "📱",
+    "camera":  "📸",
+    "receipt": "🧾",
+    "box":     "📦",
+    "chart":   "📊",
+    "megaphone":"📢",
+    "card":    "💳",
+    "image":   "🖼️",
+    "link":    "🔗",
+    "warn":    "⚠️",
+    "info":    "ℹ️",
+}
+# ================================================
+
+pending = {}
+reseller_setup = {}
+
+
+# ==================== DB ====================
+def db():
+    return sqlite3.connect("bot.db", check_same_thread=False)
+
+def init_db():
+    con = db(); c = con.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS keys(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT UNIQUE, plan TEXT, days INTEGER,
+        used INTEGER DEFAULT 0, used_by INTEGER,
+        activated_at TEXT, expires_at TEXT,
+        seller_id INTEGER DEFAULT 0)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS orders(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, username TEXT, plan TEXT, price INTEGER,
+        status TEXT DEFAULT 'pending', utr TEXT, created_at TEXT,
+        seller_id INTEGER DEFAULT 0)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS resellers(
+        user_id INTEGER PRIMARY KEY,
+        name TEXT, upi_id TEXT,
+        active INTEGER DEFAULT 1,
+        created_at TEXT,
+        expires_at TEXT,
+        duration_days INTEGER DEFAULT 30)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS users(
+        user_id INTEGER PRIMARY KEY,
+        referred_by INTEGER DEFAULT 0,
+        first_seen TEXT)""")
+    con.commit(); con.close()
+
+
+def gen_key(plan):
+    a = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+    b = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+    return f"KEY-{plan.upper()}-{a}-{b}"
+
+
+# ==================== EMOJI HELPER ====================
+def em(name):
+    """Emoji getter — agar premium set hai to use karo warna fallback"""
+    return PREMIUM_EMOJIS.get(name, "")
+
+
+# ==================== HELPERS ====================
+def is_reseller(uid):
+    """Reseller hai + active hai + expired nahi"""
+    con = db(); c = con.cursor()
+    c.execute("SELECT user_id, active, expires_at FROM resellers WHERE user_id=?", (uid,))
+    r = c.fetchone(); con.close()
+    if not r:
+        return False
+    if not r[1]:  # inactive
+        return False
+    if r[2]:
+        try:
+            if datetime.fromisoformat(r[2]) < datetime.now():
+                return False
+        except Exception:
+            pass
+    return True
+
+
+def get_reseller(uid):
+    con = db(); c = con.cursor()
+    c.execute("""SELECT user_id, name, upi_id, active, created_at, expires_at, duration_days
+                 FROM resellers WHERE user_id=?""", (uid,))
+    r = c.fetchone(); con.close()
+    return r
+
+
+def reseller_days_left(uid):
+    r = get_reseller(uid)
+    if not r or not r[5]:
+        return None
+    try:
+        delta = datetime.fromisoformat(r[5]) - datetime.now()
+        return max(0, delta.days), max(0, delta.seconds // 3600)
+    except Exception:
+        return None
+
+
+def get_seller_info(seller_id):
+    if seller_id == 0 or not seller_id:
+        return {"id": 0, "name": "Admin", "upi": UPI_ID, "qr": QR_PATH}
+    con = db(); c = con.cursor()
+    c.execute("SELECT user_id, name, upi_id FROM resellers WHERE user_id=?", (seller_id,))
+    r = c.fetchone(); con.close()
+    if not r:
+        return {"id": 0, "name": "Admin", "upi": UPI_ID, "qr": QR_PATH}
+    qr = f"qr_{r[0]}.png"
+    if not os.path.exists(qr):
+        qr = None
+    return {"id": r[0], "name": r[1], "upi": r[2], "qr": qr}
+
+
+def get_user_seller(uid):
+    con = db(); c = con.cursor()
+    c.execute("SELECT referred_by FROM users WHERE user_id=?", (uid,))
+    r = c.fetchone(); con.close()
+    return r[0] if r else 0
+
+
+def set_user_seller(uid, seller_id):
+    con = db(); c = con.cursor()
+    now = datetime.now().isoformat()
+    c.execute("""INSERT INTO users(user_id, referred_by, first_seen) VALUES(?,?,?)
+                 ON CONFLICT(user_id) DO UPDATE SET referred_by=excluded.referred_by""",
+              (uid, seller_id, now))
+    con.commit(); con.close()
+
+
+# ==================== /start ====================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    uid = user.id
+
+    # ---- Reseller check ----
+    r = get_reseller(uid)
+    if r:
+        # Active hai?
+        if not r[3]:
+            await update.message.reply_text(
+                "🚫 *Tumhara reseller account band hai.*\n\n"
+                f"💬 Support: {SUPPORT}", parse_mode="Markdown"
+            )
+            return
+        # Expired?
+        days_left = reseller_days_left(uid)
+        if days_left is not None and days_left[0] == 0 and days_left[1] == 0:
+            await update.message.reply_text(
+                "⏰ *Tumhara reseller plan expire ho gaya!*\n\n"
+                f"🔄 Renew karane ke liye admin se baat karo\n"
+                f"💬 Support: {SUPPORT}", parse_mode="Markdown"
+            )
+            return
+        await reseller_dashboard(update, context)
+        return
+
+    # ---- Referral ----
+    if context.args:
+        arg = context.args[0]
+        if arg.startswith("ref_"):
+            try:
+                rid = int(arg[4:])
+                if rid == 0 or is_reseller(rid) or rid in ADMIN_IDS:
+                    set_user_seller(uid, rid)
+                    try:
+                        target = rid if rid != 0 else ADMIN_IDS[0]
+                        await context.bot.send_message(
+                            target,
+                            f"🎉 *Naya Customer Aaya!*\n\n"
+                            f"👤 {user.full_name}\n"
+                            f"🆔 `{uid}`\n"
+                            f"🔖 @{user.username or '—'}",
+                            parse_mode="Markdown"
+                        )
+                    except Exception:
+                        pass
+            except Exception as e:
+                logging.error(f"Ref err: {e}")
+        elif arg in PLANS:
+            await send_payment(update, context, arg)
+            return
+
+    seller_id = get_user_seller(uid)
+    seller = get_seller_info(seller_id)
+
+    text = (
+        f"👋 *Namaste {user.first_name}!*\n\n"
+        "╔══════════════════════════╗\n"
+        "  🚀 *PREMIUM KEY STORE* 🚀\n"
+        "╚══════════════════════════╝\n\n"
+        "✨ *Instant Key Delivery Guaranteed*\n"
+        "🎯 Neeche se apna plan choose karo\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  💎 *AVAILABLE PLANS*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  ⚡ *1 Day*       ➜  ₹50\n"
+        "  🔥 *7 Days*      ➜  ₹499\n"
+        "  💎 *1 Month*     ➜  ₹799\n"
+    )
+    if seller["id"] != 0:
+        text += f"\n  🏪 Seller: *{seller['name']}*"
+
+    kb = [
+        [InlineKeyboardButton("⚡ 1 Day — ₹50",    callback_data="plan_1day")],
+        [InlineKeyboardButton("🔥 7 Days — ₹499",  callback_data="plan_7day")],
+        [InlineKeyboardButton("💎 1 Month — ₹799", callback_data="plan_1month")],
+        [InlineKeyboardButton("📞 Support", url=f"https://t.me/{SUPPORT.strip('@')}"),
+         InlineKeyboardButton("📖 Help",    callback_data="show_help")],
+    ]
+    await update.message.reply_text(text, parse_mode="Markdown",
+                                    reply_markup=InlineKeyboardMarkup(kb))
+
+
+# ==================== RESELLER DASHBOARD ====================
+async def reseller_dashboard(update, context):
+    uid = update.effective_user.id
+    r = get_reseller(uid)
+    if not r:
+        await update.message.reply_text("Reseller nahi mila.")
+        return
+
+    bot_username = context.bot.username
+    ref_link = f"https://t.me/{bot_username}?start=ref_{uid}"
+
+    con = db(); c = con.cursor()
+    c.execute("SELECT COUNT(*) FROM keys WHERE seller_id=? AND used=0", (uid,))
+    stock = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='pending'", (uid,))
+    pend = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='approved'", (uid,))
+    appr = c.fetchone()[0]
+    c.execute("SELECT SUM(price) FROM orders WHERE seller_id=? AND status='approved'", (uid,))
+    rev = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM users WHERE referred_by=?", (uid,))
+    customers = c.fetchone()[0]
+    con.close()
+
+    qr_status = "✅ Set" if os.path.exists(f"qr_{uid}.png") else "❌ Not set"
+
+    # Time remaining
+    days_left = reseller_days_left(uid)
+    if days_left:
+        d, h = days_left
+        time_str = f"*{d} din {h} ghante* bache"
+        warn = "⚠️ " if d <= 3 else "⏰ "
+    else:
+        time_str = "*Unlimited*"
+        warn = "♾️ "
+
+    exp_str = r[5][:10] if r[5] else "—"
+
+    text = (
+        "╔══════════════════════════╗\n"
+        "   🏪 *RESELLER DASHBOARD*\n"
+        "╚══════════════════════════╝\n\n"
+        f"👤 Name: *{r[1]}*\n"
+        f"🆔 ID: `{uid}`\n"
+        f"💳 UPI: `{r[2]}`\n"
+        f"🖼️ QR: {qr_status}\n\n"
+        f"{warn}Plan Valid Till: *{exp_str}*\n"
+        f"{warn}Time Left: {time_str}\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  📊 *YOUR STATISTICS*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"  👥 Customers   ➜  *{customers}*\n"
+        f"  📦 Stock       ➜  *{stock} keys*\n"
+        f"  ⏳ Pending     ➜  *{pend}*\n"
+        f"  ✅ Approved    ➜  *{appr}*\n"
+        f"  💰 Revenue     ➜  *₹{rev}*\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  🔗 *YOUR REFERRAL LINK*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"`{ref_link}`\n\n"
+        "☝️ Ye link share karo customers ko!"
+    )
+    kb = [
+        [InlineKeyboardButton("🔗 Get Link",  callback_data="res_link"),
+         InlineKeyboardButton("📊 Stats",     callback_data="res_stats")],
+        [InlineKeyboardButton("🖼️ Set QR",    callback_data="res_setqr"),
+         InlineKeyboardButton("💳 Set UPI",   callback_data="res_setupi")],
+        [InlineKeyboardButton("📦 Stock",     callback_data="res_stock"),
+         InlineKeyboardButton("⏳ Orders",    callback_data="res_orders")],
+        [InlineKeyboardButton("📖 Help",      callback_data="res_help")],
+    ]
+    await update.message.reply_text(text, parse_mode="Markdown",
+                                    reply_markup=InlineKeyboardMarkup(kb))
+
+
+# ==================== PAYMENT ====================
+async def send_payment(update, context, plan_key):
+    plan = PLANS[plan_key]
+    uid = update.effective_user.id
+    seller_id = get_user_seller(uid)
+    seller = get_seller_info(seller_id)
+
+    pending[uid] = {"plan": plan_key, "photo": None, "utr": None,
+                    "seller_id": seller_id}
+
+    caption = (
+        "╔══════════════════════════╗\n"
+        f"  {plan['emoji']} *{plan['name'].upper()} PLAN* {plan['emoji']}\n"
+        "╚══════════════════════════╝\n\n"
+        f"💰 *Amount:* ₹{plan['price']}\n"
+        f"⏳ *Validity:* {plan['days']} din\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  📱 *PAYMENT STEPS*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  1️⃣ Upar wala QR scan karo\n"
+        "  2️⃣ Ya UPI ID pe bhejo:\n"
+        f"     `{seller['upi']}`\n"
+        f"  3️⃣ ₹{plan['price']} pay karo\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  📤 *AB YE BHEJO*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  📸 Payment ka *screenshot*\n"
+        "  🧾 *UTR / Transaction ID*\n\n"
+        "⏳ Dono milne par admin verify karke\n"
+        "tumhari *KEY* bhej dega 🔑"
+    )
+    msg = update.effective_message
+
+    if seller["qr"] and os.path.exists(seller["qr"]):
+        try:
+            with open(seller["qr"], "rb") as f:
+                await msg.reply_photo(f, caption=caption, parse_mode="Markdown")
+            return
+        except Exception as e:
+            logging.error(f"QR fail: {e}")
+
+    await msg.reply_text(caption + "\n\n⚠️ _QR available nahi, UPI ID use karo_",
+                         parse_mode="Markdown")
+
+
+# ==================== SCREENSHOT ====================
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+
+    if uid in reseller_setup and reseller_setup[uid] == "awaiting_qr":
+        try:
+            file = await update.message.photo[-1].get_file()
+            await file.download_to_drive(f"qr_{uid}.png")
+            del reseller_setup[uid]
+            await update.message.reply_text(
+                "✅ *QR set ho gaya!*\n\n🖼️ Ab customers ko ye QR dikhega.",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logging.error(f"QR save: {e}")
+            await update.message.reply_text("❌ QR save nahi hua. Dobara try karo.")
+        return
+
+    if uid not in pending:
+        await update.message.reply_text("⚠️ Pehle /start dabao aur plan choose karo.")
+        return
+
+    pending[uid]["photo"] = update.message.photo[-1].file_id
+    if pending[uid]["utr"]:
+        await create_order(update, context, uid)
+    else:
+        await update.message.reply_text(
+            "✅ *Screenshot mil gaya!*\n\n🧾 Ab *UTR / Transaction ID* bhejo.",
+            parse_mode="Markdown"
+        )
+
+
+# ==================== TEXT ====================
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    text = update.message.text.strip()
+
+    if uid in reseller_setup and reseller_setup[uid] == "awaiting_upi":
+        if "@" not in text or len(text) < 5:
+            await update.message.reply_text("⚠️ Valid UPI bhejo (jaise `name@ybl`)",
+                                            parse_mode="Markdown")
+            return
+        con = db(); c = con.cursor()
+        c.execute("UPDATE resellers SET upi_id=? WHERE user_id=?", (text, uid))
+        con.commit(); con.close()
+        del reseller_setup[uid]
+        await update.message.reply_text(f"✅ *UPI set!*\n\n💳 `{text}`",
+                                        parse_mode="Markdown")
+        return
+
+    if uid not in pending:
+        return
+    if len(text) < 6:
+        await update.message.reply_text("⚠️ Ye valid UTR nahi lag raha.")
+        return
+
+    pending[uid]["utr"] = text
+    if pending[uid]["photo"]:
+        await create_order(update, context, uid)
+    else:
+        await update.message.reply_text(
+            "✅ *UTR note ho gaya!*\n\n📸 Ab screenshot bhejo.",
+            parse_mode="Markdown"
+        )
+
+
+# ==================== ORDER CREATE ====================
+async def create_order(update, context, uid):
+    st = pending[uid]
+    plan_key = st["plan"]
+    plan = PLANS[plan_key]
+    seller_id = st["seller_id"]
+    user = update.effective_user
+
+    con = db(); c = con.cursor()
+    c.execute("""INSERT INTO orders(user_id, username, plan, price, status, utr, created_at, seller_id)
+                 VALUES(?,?,?,?,?,?,?,?)""",
+              (uid, user.username or "", plan_key, plan["price"],
+               "pending", st["utr"], datetime.now().isoformat(), seller_id))
+    oid = c.lastrowid
+    con.commit(); con.close()
+    del pending[uid]
+
+    await update.message.reply_text(
+        f"⏳ *Order #{oid} Submit Ho Gaya!*\n\n"
+        f"📦 Plan: *{plan['name']}*\n"
+        f"💰 Amount: *₹{plan['price']}*\n"
+        f"🧾 UTR: `{st['utr']}`\n\n"
+        "🔔 Admin verify karke key bhejega...",
+        parse_mode="Markdown"
+    )
+
+    caption = (
+        f"🔔 *NAYA ORDER #{oid}*\n\n"
+        f"👤 {user.full_name}\n"
+        f"🔖 @{user.username or '—'}\n"
+        f"🆔 `{uid}`\n\n"
+        f"📦 Plan: *{plan['name']}*\n"
+        f"💰 Price: *₹{plan['price']}*\n"
+        f"🧾 UTR: `{st['utr']}`\n\n"
+        "👇 Verify karke decide karo:"
+    )
+    kb = InlineKeyboardMarkup([[
+        InlineKeyboardButton("✅ Approve", callback_data=f"ok_{oid}"),
+        InlineKeyboardButton("❌ Reject",  callback_data=f"no_{oid}")
+    ]])
+
+    recipients = ADMIN_IDS if seller_id == 0 else [seller_id]
+    for r in recipients:
+        try:
+            await context.bot.send_photo(r, st["photo"], caption=caption,
+                                         parse_mode="Markdown", reply_markup=kb)
+        except Exception as e:
+            logging.error(f"Notify {r}: {e}")
+
+
+# ==================== CALLBACKS ====================
+async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    data = q.data
+    uid = q.from_user.id
+
+    if data in ("show_help", "res_help"):
+        await q.answer()
+        await q.message.reply_text(help_text(uid, reseller=is_reseller(uid)),
+                                    parse_mode="Markdown")
+        return
+
+    if data == "res_link":
+        await q.answer()
+        link = f"https://t.me/{context.bot.username}?start=ref_{uid}"
+        await q.message.reply_text(
+            f"🔗 *YOUR REFERRAL LINK*\n\n`{link}`\n\n☝️ Share karo!",
+            parse_mode="Markdown")
+        return
+
+    if data == "res_setqr":
+        await q.answer()
+        reseller_setup[uid] = "awaiting_qr"
+        await q.message.reply_text("🖼️ *QR Setup*\n\nAb QR image bhejo 👇",
+                                   parse_mode="Markdown")
+        return
+
+    if data == "res_setupi":
+        await q.answer()
+        reseller_setup[uid] = "awaiting_upi"
+        await q.message.reply_text("💳 *UPI Setup*\n\nUPI ID bhejo (jaise `name@ybl`) 👇",
+                                   parse_mode="Markdown")
+        return
+
+    if data == "res_stock":
+        await q.answer()
+        con = db(); c = con.cursor()
+        txt = "📦 *YOUR STOCK*\n\n"
+        total = 0
+        for p in PLANS:
+            c.execute("SELECT COUNT(*) FROM keys WHERE plan=? AND used=0 AND seller_id=?",
+                      (p, uid))
+            n = c.fetchone()[0]; total += n
+            txt += f"{PLANS[p]['emoji']} {PLANS[p]['name']}: *{n}* keys\n"
+        con.close()
+        txt += f"\n📊 Total: *{total}* keys"
+        await q.message.reply_text(txt, parse_mode="Markdown")
+        return
+
+    if data == "res_orders":
+        await q.answer()
+        con = db(); c = con.cursor()
+        c.execute("""SELECT id, user_id, plan, utr FROM orders
+                     WHERE status='pending' AND seller_id=? ORDER BY id""", (uid,))
+        rows = c.fetchall(); con.close()
+        if not rows:
+            await q.message.reply_text("✅ Koi pending order nahi!", parse_mode="Markdown")
+            return
+        txt = "⏳ *YOUR PENDING ORDERS*\n\n"
+        for r in rows:
+            txt += f"🔔 #{r[0]} | {PLANS.get(r[2],{}).get('name',r[2])} | `{r[1]}` | UTR `{r[3]}`\n"
+        await q.message.reply_text(txt, parse_mode="Markdown")
+        return
+
+    if data == "res_stats":
+        await q.answer()
+        con = db(); c = con.cursor()
+        c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='approved'", (uid,))
+        a = c.fetchone()[0]
+        c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='pending'", (uid,))
+        p = c.fetchone()[0]
+        c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='rejected'", (uid,))
+        r = c.fetchone()[0]
+        c.execute("SELECT SUM(price) FROM orders WHERE seller_id=? AND status='approved'", (uid,))
+        rev = c.fetchone()[0] or 0
+        c.execute("SELECT COUNT(*) FROM users WHERE referred_by=?", (uid,))
+        cust = c.fetchone()[0]
+        con.close()
+        days_left = reseller_days_left(uid)
+        time_line = ""
+        if days_left:
+            d, h = days_left
+            time_line = f"⏰ Plan Time: *{d}d {h}h*\n"
+        await q.message.reply_text(
+            f"📊 *YOUR STATISTICS*\n\n"
+            f"👥 Customers: *{cust}*\n"
+            f"✅ Approved: *{a}*\n"
+            f"⏳ Pending: *{p}*\n"
+            f"❌ Rejected: *{r}*\n"
+            f"💰 Revenue: *₹{rev}*\n\n"
+            f"{time_line}",
+            parse_mode="Markdown")
+        return
+
+    if data.startswith("plan_"):
+        pk = data.split("_", 1)[1]
+        if pk in PLANS:
+            await q.answer()
+            await send_payment(update, context, pk)
+        return
+
+    if data.startswith(("ok_", "no_")):
+        action, oid = data.split("_")
+        oid = int(oid)
+
+        con = db(); c = con.cursor()
+        c.execute("SELECT user_id, plan, status, seller_id FROM orders WHERE id=?", (oid,))
+        row = c.fetchone()
+        if not row:
+            await q.answer("Order nahi mila", show_alert=True); con.close(); return
+        user_id, plan_key, status, seller_id = row
+
+        if uid not in ADMIN_IDS and uid != seller_id:
+            await q.answer("Tum is order ke owner nahi ho!", show_alert=True)
+            con.close(); return
+        if status != "pending":
+            await q.answer("Already handled", show_alert=True); con.close(); return
+
+        if action == "ok":
+            c.execute("""SELECT id, key, days FROM keys
+                         WHERE plan=? AND used=0 AND seller_id=? LIMIT 1""",
+                      (plan_key, seller_id))
+            k = c.fetchone()
+            if not k:
+                await q.answer(
+                    f"❌ Tumhare stock me {plan_key} ki key nahi hai!\n"
+                    f"/addkeys ya /genkeys chalao.",
+                    show_alert=True)
+                con.close(); return
+
+            key_id, key, days = k
+            now = datetime.now()
+            exp = now + timedelta(days=days)
+            c.execute("""UPDATE keys SET used=1, used_by=?, activated_at=?, expires_at=?
+                         WHERE id=?""",
+                      (user_id, now.isoformat(), exp.isoformat(), key_id))
+            c.execute("UPDATE orders SET status='approved' WHERE id=?", (oid,))
+            con.commit(); con.close()
+
+            plan = PLANS[plan_key]
+            try:
+                await context.bot.send_message(
+                    user_id,
+                    f"🎉 *PAYMENT VERIFIED!* 🎉\n\n"
+                    "╔══════════════════════════╗\n"
+                    f"  {plan['emoji']} *YOUR KEY* {plan['emoji']}\n"
+                    "╚══════════════════════════╝\n\n"
+                    f"🔑 `{key}`\n\n"
+                    f"📦 Plan: *{plan['name']}*\n"
+                    f"⏳ Validity: *{days} din*\n"
+                    f"📅 Expiry: *{exp.strftime('%d-%m-%Y')}*\n\n"
+                    f"🚀 Enjoy karo!\n💬 Support: {SUPPORT}",
+                    parse_mode="Markdown")
+            except Exception as e:
+                logging.error(f"Key send: {e}")
+
+            try:
+                await q.edit_message_caption(
+                    caption=(q.message.caption or "") + "\n\n✅ *APPROVED*",
+                    reply_markup=None)
+            except Exception:
+                pass
+            await q.answer("Key bhej di ✅")
+
+        else:
+            c.execute("UPDATE orders SET status='rejected' WHERE id=?", (oid,))
+            con.commit(); con.close()
+            try:
+                await context.bot.send_message(
+                    user_id,
+                    "❌ *Payment Verify Nahi Hua*\n\n"
+                    "Sahi screenshot + UTR ke saath dobara try karo\n"
+                    f"💬 Support: {SUPPORT}",
+                    parse_mode="Markdown")
+            except Exception:
+                pass
+            try:
+                await q.edit_message_caption(
+                    caption=(q.message.caption or "") + "\n\n❌ *REJECTED*",
+                    reply_markup=None)
+            except Exception:
+                pass
+            await q.answer("Reject kar diya")
+
+
+# ==================== HELP ====================
+def help_text(uid, reseller=False):
+    text = (
+        "📖 *COMMAND LIST*\n"
+        "═══════════════════════════\n\n"
+        "👤 *USER COMMANDS*\n"
+        "├ /start — Welcome\n"
+        "├ /help — Ye list\n"
+        "├ /id — Apni ID\n"
+        "└ /myorders — Orders\n"
+    )
+    if uid in ADMIN_IDS:
+        text += (
+            "\n👑 *ADMIN COMMANDS*\n"
+            "├ /addreseller `<uid> <name> <upi> <days>`\n"
+            "├ /extendreseller `<uid> <days>`\n"
+            "├ /resellerinfo `<uid>`\n"
+            "├ /removereseller `<uid>`\n"
+            "├ /resellers — Sabki list\n"
+            "├ /addkeys `<plan> <k1,k2>`\n"
+            "├ /genkeys `<plan> <count>`\n"
+            "├ /stock — Stock\n"
+            "├ /orders — Pending\n"
+            "├ /stats — Overall stats\n"
+            "└ /broadcast `<msg>`\n"
+        )
+    if reseller:
+        text += (
+            "\n🏪 *RESELLER COMMANDS*\n"
+            "├ /myinfo — Apni info + time\n"
+            "├ /ref — Referral link\n"
+            "├ /setqr — QR change\n"
+            "├ /setupi `<upi>` — UPI change\n"
+            "├ /addkeys `<plan> <k1,k2>`\n"
+            "├ /genkeys `<plan> <count>`\n"
+            "├ /stock — Apna stock\n"
+            "├ /orders — Apne orders\n"
+            "└ /stats — Apni sales\n"
+        )
+    text += f"\n═══════════════════════════\n💬 Support: {SUPPORT}"
+    return text
+
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    await update.message.reply_text(help_text(uid, reseller=is_reseller(uid)),
+                                    parse_mode="Markdown")
+
+
+async def id_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    u = update.effective_user
+    extra = ""
+    if is_reseller(u.id):
+        extra = "\n🏪 Status: *RESELLER*"
+    elif get_user_seller(u.id) > 0:
+        r = get_reseller(get_user_seller(u.id))
+        extra = f"\n🏪 Seller: *{r[1] if r else '—'}*"
+    await update.message.reply_text(
+        f"🆔 *Tumhari Details*\n\n👤 {u.full_name}\n🔖 @{u.username or '—'}\n🆔 `{u.id}`{extra}",
+        parse_mode="Markdown")
+
+
+async def myorders_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    con = db(); c = con.cursor()
+    c.execute("""SELECT id, plan, status FROM orders
+                 WHERE user_id=? ORDER BY id DESC LIMIT 10""", (uid,))
+    rows = c.fetchall(); con.close()
+    if not rows:
+        await update.message.reply_text("📭 Koi order nahi."); return
+    emoji_map = {"pending": "⏳", "approved": "✅", "rejected": "❌"}
+    txt = "📋 *Tumhare Orders*\n\n"
+    for r in rows:
+        txt += f"{emoji_map.get(r[2],'❔')} #{r[0]} — {PLANS.get(r[1],{}).get('name',r[1])} — *{r[2].upper()}*\n"
+    await update.message.reply_text(txt, parse_mode="Markdown")
+
+
+async def ref_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    if not is_reseller(uid):
+        await update.message.reply_text("Sirf resellers ke liye."); return
+    link = f"https://t.me/{context.bot.username}?start=ref_{uid}"
+    await update.message.reply_text(
+        f"🔗 *YOUR REFERRAL LINK*\n\n`{link}`\n\n☝️ Share karo!",
+        parse_mode="Markdown")
+
+
+async def setqr_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    if not is_reseller(uid): return
+    reseller_setup[uid] = "awaiting_qr"
+    await update.message.reply_text("🖼️ Ab apna naya QR bhejo 👇",
+                                    parse_mode="Markdown")
+
+
+async def setupi_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    if not is_reseller(uid): return
+    if not context.args:
+        reseller_setup[uid] = "awaiting_upi"
+        await update.message.reply_text("💳 UPI ID bhejo (jaise `name@ybl`)",
+                                        parse_mode="Markdown")
+        return
+    upi = context.args[0]
+    if "@" not in upi:
+        await update.message.reply_text("❌ Invalid UPI"); return
+    con = db(); c = con.cursor()
+    c.execute("UPDATE resellers SET upi_id=? WHERE user_id=?", (upi, uid))
+    con.commit(); con.close()
+    await update.message.reply_text(f"✅ UPI set: `{upi}`", parse_mode="Markdown")
+
+
+async def myinfo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    if not is_reseller(uid) and uid not in ADMIN_IDS:
+        await update.message.reply_text("Sirf resellers ke liye."); return
+    if uid in ADMIN_IDS and not get_reseller(uid):
+        await update.message.reply_text("👑 Tum Admin ho."); return
+
+    r = get_reseller(uid)
+    if not r:
+        await update.message.reply_text("Reseller nahi mila."); return
+
+    link = f"https://t.me/{context.bot.username}?start=ref_{uid}"
+    qr_status = "✅ Set" if os.path.exists(f"qr_{uid}.png") else "❌ Not set"
+    days_left = reseller_days_left(uid)
+    if days_left:
+        d, h = days_left
+        time_line = f"⏰ Time Left: *{d} din {h} ghante*"
+        exp_line = f"📅 Expires: *{r[5][:10]}*"
+    else:
+        time_line = "♾️ Unlimited"
+        exp_line = ""
+
+    await update.message.reply_text(
+        f"🏪 *My Info*\n\n"
+        f"👤 Name: *{r[1]}*\n"
+        f"🆔 ID: `{uid}`\n"
+        f"💳 UPI: `{r[2]}`\n"
+        f"🖼️ QR: {qr_status}\n\n"
+        f"{exp_line}\n{time_line}\n\n"
+        f"🔗 Link: `{link}`",
+        parse_mode="Markdown")
+
+
+# ==================== ADMIN COMMANDS ====================
+async def addreseller(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    if len(context.args) < 4:
+        await update.message.reply_text(
+            "📝 *Use:* `/addreseller <user_id> <name> <upi> <days>`\n\n"
+            "Example:\n`/addreseller 123456789 Rahul rahul@ybl 30`\n\n"
+            "Days = kitne din ke liye reseller banega\n"
+            "(30 = 1 month, 60 = 2 months, 365 = 1 year)",
+            parse_mode="Markdown")
+        return
+    try:
+        rid = int(context.args[0])
+        name = context.args[1]
+        upi = context.args[2]
+        days = int(context.args[3])
+        assert "@" in upi and days > 0
+    except Exception:
+        await update.message.reply_text("❌ Invalid input. Format check karo.")
+        return
+
+    expires = (datetime.now() + timedelta(days=days)).isoformat()
+
+    con = db(); c = con.cursor()
+    try:
+        c.execute("""INSERT INTO resellers(user_id, name, upi_id, active, created_at, expires_at, duration_days)
+                     VALUES(?,?,?,1,?,?,?)""",
+                  (rid, name, upi, datetime.now().isoformat(), expires, days))
+        con.commit()
+    except sqlite3.IntegrityError:
+        con.close()
+        await update.message.reply_text("⚠️ Ye user already reseller hai. /extendreseller use karo.")
+        return
+    con.close()
+
+    await update.message.reply_text(
+        f"✅ *Reseller Added!*\n\n"
+        f"👤 Name: *{name}*\n"
+        f"🆔 ID: `{rid}`\n"
+        f"💳 UPI: `{upi}`\n"
+        f"⏰ Duration: *{days} din*\n"
+        f"📅 Expires: *{expires[:10]}*\n\n"
+        "Ab unhe bolo /start dabaye.",
+        parse_mode="Markdown")
+
+    try:
+        await context.bot.send_message(
+            rid,
+            f"🎉 *Congratulations!*\n\n"
+            f"Tum ab *RESELLER* ho is bot par!\n\n"
+            f"⏰ Duration: *{days} din*\n"
+            f"📅 Expires: *{expires[:10]}*\n\n"
+            "Setup karo:\n"
+            "1️⃣ /setqr — apna QR\n"
+            "2️⃣ /setupi — apni UPI\n"
+            "3️⃣ /ref — referral link\n"
+            "4️⃣ /genkeys — keys banao\n\n"
+            "📖 /help — full commands",
+            parse_mode="Markdown")
+    except Exception:
+        pass
+
+
+async def extendreseller(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "📝 *Use:* `/extendreseller <uid> <days>`\n\n"
+            "Example: `/extendreseller 123456789 30`",
+            parse_mode="Markdown")
+        return
+    try:
+        rid = int(context.args[0])
+        days = int(context.args[1])
+        assert days > 0
+    except Exception:
+        await update.message.reply_text("❌ Invalid"); return
+
+    r = get_reseller(rid)
+    if not r:
+        await update.message.reply_text("Reseller nahi mila."); return
+
+    # Purani expiry se aage badhao, ya aaj se agar expired
+    try:
+        current = datetime.fromisoformat(r[5]) if r[5] else datetime.now()
+        if current < datetime.now():
+            current = datetime.now()
+    except Exception:
+        current = datetime.now()
+
+    new_exp = current + timedelta(days=days)
+    total = (r[6] or 0) + days
+
+    con = db(); c = con.cursor()
+    c.execute("""UPDATE resellers SET expires_at=?, duration_days=?, active=1
+                 WHERE user_id=?""", (new_exp.isoformat(), total, rid))
+    con.commit(); con.close()
+
+    await update.message.reply_text(
+        f"✅ *Extended!*\n\n"
+        f"👤 `{rid}`\n"
+        f"➕ Added: *{days} din*\n"
+        f"📅 New Expiry: *{new_exp.strftime('%Y-%m-%d')}*",
+        parse_mode="Markdown")
+
+    try:
+        await context.bot.send_message(
+            rid,
+            f"🎉 *Plan Extended!*\n\n"
+            f"➕ *{days} din* add ho gaye\n"
+            f"📅 New Expiry: *{new_exp.strftime('%Y-%m-%d')}*",
+            parse_mode="Markdown")
+    except Exception:
+        pass
+
+
+async def resellerinfo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    if not context.args:
+        await update.message.reply_text("Use: `/resellerinfo <uid>`",
+                                        parse_mode="Markdown")
+        return
+    try:
+        rid = int(context.args[0])
+    except Exception:
+        await update.message.reply_text("❌ Invalid ID"); return
+
+    r = get_reseller(rid)
+    if not r:
+        await update.message.reply_text("Reseller nahi mila."); return
+
+    con = db(); c = con.cursor()
+    c.execute("SELECT COUNT(*) FROM keys WHERE seller_id=? AND used=0", (rid,))
+    stock = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='approved'", (rid,))
+    appr = c.fetchone()[0]
+    c.execute("SELECT SUM(price) FROM orders WHERE seller_id=? AND status='approved'", (rid,))
+    rev = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM users WHERE referred_by=?", (rid,))
+    cust = c.fetchone()[0]
+    con.close()
+
+    days_left = reseller_days_left(rid)
+    if days_left:
+        d, h = days_left
+        time_line = f"⏰ Left: *{d}d {h}h*"
+        status = "🟢 Active" if d > 0 or h > 0 else "🔴 Expired"
+    else:
+        time_line = "♾️ Unlimited"
+        status = "🟢 Active"
+
+    await update.message.reply_text(
+        f"🏪 *RESELLER INFO*\n\n"
+        f"👤 Name: *{r[1]}*\n"
+        f"🆔 ID: `{rid}`\n"
+        f"💳 UPI: `{r[2]}`\n"
+        f"📊 Status: {status}\n"
+        f"📅 Expires: *{r[5][:10] if r[5] else '—'}*\n"
+        f"{time_line}\n\n"
+        f"👥 Customers: *{cust}*\n"
+        f"📦 Stock: *{stock}*\n"
+        f"✅ Approved: *{appr}*\n"
+        f"💰 Revenue: *₹{rev}*",
+        parse_mode="Markdown")
+
+
+async def removereseller(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    if not context.args:
+        await update.message.reply_text("Use: `/removereseller <uid>`",
+                                        parse_mode="Markdown")
+        return
+    try:
+        rid = int(context.args[0])
+    except Exception:
+        await update.message.reply_text("❌ Invalid"); return
+    con = db(); c = con.cursor()
+    c.execute("DELETE FROM resellers WHERE user_id=?", (rid,))
+    con.commit(); con.close()
+    await update.message.reply_text(f"✅ Reseller `{rid}` hata diya.",
+                                    parse_mode="Markdown")
+    try:
+        await context.bot.send_message(rid, "🚫 Tumhara reseller account band kar diya gaya.")
+    except Exception:
+        pass
+
+
+async def resellers_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    con = db(); c = con.cursor()
+    c.execute("""SELECT user_id, name, upi_id, active, expires_at
+                 FROM resellers ORDER BY created_at""")
+    rows = c.fetchall(); con.close()
+    if not rows:
+        await update.message.reply_text("Koi reseller nahi."); return
+
+    txt = "🏪 *ALL RESELLERS*\n\n"
+    for r in rows:
+        rid = r[0]
+        d = reseller_days_left(rid)
+        if d and (d[0] > 0 or d[1] > 0):
+            st = f"🟢 {d[0]}d left"
+        elif d:
+            st = "🔴 Expired"
+        else:
+            st = "♾️"
+        act = "" if r[3] else " (inactive)"
+        txt += f"• `{rid}` — *{r[1]}*{act}\n  💳 `{r[2]}`\n  {st}\n\n"
+    await update.message.reply_text(txt, parse_mode="Markdown")
+
+
+# ==================== KEYS / STOCK / ORDERS / STATS ====================
+async def addkeys(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    is_admin = uid in ADMIN_IDS
+    is_res = is_reseller(uid)
+    if not is_admin and not is_res: return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "📝 `/addkeys 1day KEY1,KEY2,KEY3`",
+            parse_mode="Markdown")
+        return
+    pk = context.args[0].lower()
+    if pk not in PLANS:
+        await update.message.reply_text("Plans: " + ", ".join(PLANS)); return
+
+    keys = [k.strip() for k in " ".join(context.args[1:]).split(",") if k.strip()]
+    seller_id = 0 if is_admin else uid
+    con = db(); c = con.cursor(); added = 0
+    for k in keys:
+        try:
+            c.execute("""INSERT INTO keys(key, plan, days, seller_id)
+                         VALUES(?,?,?,?)""",
+                      (k, pk, PLANS[pk]["days"], seller_id))
+            added += 1
+        except sqlite3.IntegrityError:
+            pass
+    con.commit(); con.close()
+    await update.message.reply_text(
+        f"✅ *{added}* key(s) add!\n📦 {PLANS[pk]['name']}",
+        parse_mode="Markdown")
+
+
+async def genkeys(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    is_admin = uid in ADMIN_IDS
+    is_res = is_reseller(uid)
+    if not is_admin and not is_res: return
+
+    try:
+        pk = context.args[0].lower()
+        count = int(context.args[1])
+        assert pk in PLANS and 1 <= count <= 100
+    except Exception:
+        await update.message.reply_text("Use: `/genkeys 1day 10`",
+                                        parse_mode="Markdown")
+        return
+
+    seller_id = 0 if is_admin else uid
+    con = db(); c = con.cursor(); made = []
+    for _ in range(count):
+        for _try in range(5):
+            k = gen_key(pk)
+            try:
+                c.execute("""INSERT INTO keys(key, plan, days, seller_id)
+                             VALUES(?,?,?,?)""",
+                          (k, pk, PLANS[pk]["days"], seller_id))
+                made.append(k); break
+            except sqlite3.IntegrityError:
+                continue
+    con.commit(); con.close()
+    await update.message.reply_text(
+        f"✅ *{len(made)}* keys generated!\n\n`" + "`\n`".join(made) + "`",
+        parse_mode="Markdown")
+
+
+async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    is_admin = uid in ADMIN_IDS
+    is_res = is_reseller(uid)
+    if not is_admin and not is_res: return
+
+    seller_id = 0 if is_admin else uid
+    con = db(); c = con.cursor()
+    txt = "📦 *STOCK*\n\n"
+    total = 0
+    for p in PLANS:
+        c.execute("SELECT COUNT(*) FROM keys WHERE plan=? AND used=0 AND seller_id=?",
+                  (p, seller_id))
+        n = c.fetchone()[0]; total += n
+        txt += f"{PLANS[p]['emoji']} {PLANS[p]['name']}: *{n}* keys\n"
+    con.close()
+    txt += f"\n📊 Total: *{total}* keys"
+    await update.message.reply_text(txt, parse_mode="Markdown")
+
+
+async def orders_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    is_admin = uid in ADMIN_IDS
+    is_res = is_reseller(uid)
+    if not is_admin and not is_res: return
+
+    con = db(); c = con.cursor()
+    if is_admin:
+        c.execute("""SELECT id, user_id, plan, utr, seller_id FROM orders
+                     WHERE status='pending' ORDER BY id""")
+    else:
+        c.execute("""SELECT id, user_id, plan, utr, seller_id FROM orders
+                     WHERE status='pending' AND seller_id=? ORDER BY id""", (uid,))
+    rows = c.fetchall(); con.close()
+    if not rows:
+        await update.message.reply_text("✅ Koi pending order nahi!",
+                                        parse_mode="Markdown")
+        return
+    txt = "⏳ *PENDING ORDERS*\n\n"
+    for r in rows:
+        seller_tag = f" (seller: `{r[4]}`)" if r[4] != 0 else ""
+        txt += f"🔔 #{r[0]} | {PLANS.get(r[2],{}).get('name',r[2])} | `{r[1]}`{seller_tag}\n"
+    await update.message.reply_text(txt, parse_mode="Markdown")
+
+
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    is_admin = uid in ADMIN_IDS
+    is_res = is_reseller(uid)
+    if not is_admin and not is_res: return
+
+    con = db(); c = con.cursor()
+    if is_admin:
+        base = ""
+        params = ()
+    else:
+        base = "WHERE seller_id=?"
+        params = (uid,)
+
+    sep = "AND" if base else "WHERE"
+    c.execute(f"SELECT COUNT(*) FROM orders {base} {sep} status='approved'", params)
+    a = c.fetchone()[0]
+    c.execute(f"SELECT COUNT(*) FROM orders {base} {sep} status='pending'", params)
+    p = c.fetchone()[0]
+    c.execute(f"SELECT COUNT(*) FROM orders {base} {sep} status='rejected'", params)
+    r = c.fetchone()[0]
+    c.execute(f"SELECT SUM(price) FROM orders {base} {sep} status='approved'", params)
+    rev = c.fetchone()[0] or 0
+    con.close()
+
+    title = "BOT STATISTICS" if is_admin else "YOUR STATISTICS"
+    await update.message.reply_text(
+        f"📊 *{title}*\n\n"
+        f"✅ Approved: *{a}*\n"
+        f"⏳ Pending:  *{p}*\n"
+        f"❌ Rejected: *{r}*\n\n"
+        f"💰 Revenue: *₹{rev}*",
+        parse_mode="Markdown")
+
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    if not context.args:
+        await update.message.reply_text("Use: `/broadcast Your message`",
+                                        parse_mode="Markdown")
+        return
+    msg = " ".join(context.args)
+    con = db(); c = con.cursor()
+    c.execute("SELECT DISTINCT user_id FROM orders")
+    users = [r[0] for r in c.fetchall()]
+    con.close()
+    sent = 0
+    for u in users:
+        try:
+            await context.bot.send_message(u, f"📢 *ANNOUNCEMENT*\n\n{msg}",
+                                           parse_mode="Markdown")
+            sent += 1
+        except Exception:
+            pass
+    await update.message.reply_text(f"✅ Bhej diya *{sent}* users ko.",
+                                    parse_mode="Markdown")
+
+
+# ==================== POST INIT ====================
+async def post_init(app):
+    me = await app.bot.get_me()
+    print(f"✅ Bot: @{me.username}")
+    print(f"👑 Admin: {ADMIN_IDS}")
+
+
+# ==================== MAIN ====================
+def main():
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    init_db()
+    app = (Application.builder().token(BOT_TOKEN).post_init(post_init).build())
+
+    # User
+    app.add_handler(CommandHandler("start",     start))
+    app.add_handler(CommandHandler("help",      help_cmd))
+    app.add_handler(CommandHandler("id",        id_cmd))
+    app.add_handler(CommandHandler("myorders",  myorders_cmd))
+
+    # Reseller
+    app.add_handler(CommandHandler("myinfo",    myinfo_cmd))
+    app.add_handler(CommandHandler("ref",       ref_cmd))
+    app.add_handler(CommandHandler("setqr",     setqr_cmd))
+    app.add_handler(CommandHandler("setupi",    setupi_cmd))
+
+    # Admin reseller mgmt
+    app.add_handler(CommandHandler("addreseller",     addreseller))
+    app.add_handler(CommandHandler("extendreseller",  extendreseller))
+    app.add_handler(CommandHandler("resellerinfo",    resellerinfo))
+    app.add_handler(CommandHandler("removereseller",  removereseller))
+    app.add_handler(CommandHandler("resellers",       resellers_cmd))
+
+    # Common
+    app.add_handler(CommandHandler("addkeys",   addkeys))
+    app.add_handler(CommandHandler("genkeys",   genkeys))
+    app.add_handler(CommandHandler("stock",     stock))
+    app.add_handler(CommandHandler("orders",    orders_cmd))
+    app.add_handler(CommandHandler("stats",     stats))
+    app.add_handler(CommandHandler("broadcast", broadcast))
+
+    app.add_handler(CallbackQueryHandler(on_callback))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+
+    print("🤖 Bot chal raha hai... (Ctrl+C to stop)")
+    app.run_polling(close_loop=False)
+
+
+if __name__ == "__main__":
+    main()
