@@ -1,21 +1,22 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect
-import os, sqlite3, secrets, string, re
+import os, sqlite3, secrets, string, re, base64
 from datetime import datetime
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "oneplus-super-secret-2026-change-this"
+app.secret_key = "oneplus-super-secret-change-this-2026"
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
 
-# ==================== CONFIG ====================
-BRAND_NAME   = "OnePlus Store"
-UPI_ID       = "rajakhan7017503559@okicici"
-UPI_NAME     = "Raja Khan"
-SUPPORT      = "@BT_TIGER23"
-DB_PATH      = os.path.join(os.path.dirname(__file__), "shop.db")
+BRAND_NAME = "OnePlus Store"
+UPI_ID     = "rajakhan7017503559@okicici"
+UPI_NAME   = "Raja Khan"
+SUPPORT    = "@BT_TIGER23"
+DB_PATH    = os.path.join(os.path.dirname(__file__), "shop.db")
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# ADMIN LOGIN
 ADMIN_USER = "admin"
-ADMIN_PASS = "admin123"       # isko change kar lena!
+ADMIN_PASS = "admin123"
 
 APPS = {
     "starplus":  {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
@@ -46,25 +47,57 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         app TEXT, plan TEXT, price INTEGER,
         name TEXT, contact TEXT, utr TEXT UNIQUE,
-        status TEXT DEFAULT 'pending', key_given TEXT,
-        created_at TEXT, approved_at TEXT)""")
+        screenshot TEXT, risk_score INTEGER DEFAULT 0,
+        risk_reason TEXT, status TEXT DEFAULT 'pending',
+        key_given TEXT, created_at TEXT, approved_at TEXT)""")
     con.commit(); con.close()
 
 
 def admin_required(f):
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def w(*a, **k):
         if not session.get("admin"):
             return redirect("/admin/login")
-        return f(*args, **kwargs)
-    return wrapper
+        return f(*a, **k)
+    return w
+
+
+def calc_risk(utr, name, contact, screenshot):
+    score = 0; reasons = []
+    # UTR checks
+    if utr:
+        fake_utrs = ["1234567890","0000000000","1111111111","123456789012",
+                     "test","fake","abc123","123456789","9999999999","2222222222"]
+        if utr.lower() in fake_utrs:
+            score += 60; reasons.append("Fake UTR pattern")
+        if len(set(utr)) <= 2:
+            score += 40; reasons.append("Same digits repeat")
+        if utr.isdigit() and len(utr) >= 10:
+            try:
+                nums = [int(x) for x in utr]
+                diffs = [nums[i+1]-nums[i] for i in range(len(nums)-1)]
+                if len(set(diffs)) == 1:
+                    score += 50; reasons.append("Sequential UTR")
+            except: pass
+        if len(utr) < 12:
+            score += 25; reasons.append("UTR chhota")
+    if name:
+        if len(name) < 3: score += 20; reasons.append("Naam chhota")
+        if re.search(r'[^a-zA-Z\s\.\-]', name): score += 15; reasons.append("Ajeeb characters")
+        if re.search(r'(asdf|qwer|zxcv|hjkl|test|fake|abc)', name.lower()):
+            score += 30; reasons.append("Random/fake naam")
+    if contact:
+        if len(contact) < 5: score += 20; reasons.append("Contact chhota")
+        if not ("@" in contact or contact.replace("+","").replace(" ","").isdigit()):
+            score += 15; reasons.append("Contact invalid")
+    if not screenshot: score += 30; reasons.append("Screenshot missing")
+    return min(score, 100), " | ".join(reasons)
 
 
 @app.route("/")
 def home():
-    return render_template("index.html",
-        apps=APPS, plans=PLANS, brand=BRAND_NAME,
-        upi=UPI_ID, upi_name=UPI_NAME, support=SUPPORT)
+    return render_template("index.html", apps=APPS, plans=PLANS,
+        brand=BRAND_NAME, upi=UPI_ID, upi_name=UPI_NAME, support=SUPPORT)
 
 
 @app.route("/static/<path:f>")
@@ -81,35 +114,44 @@ def create_order():
         name = (d.get("name") or "").strip()
         contact = (d.get("contact") or "").strip()
         utr = (d.get("utr") or "").strip()
+        screenshot_data = d.get("screenshot") or ""
 
-        if app_key not in APPS:
-            return jsonify({"ok": False, "error": "App select karo"}), 400
-        if plan_key not in PLANS:
-            return jsonify({"ok": False, "error": "Plan select karo"}), 400
-        if len(name) < 2:
-            return jsonify({"ok": False, "error": "Naam chhota hai"}), 400
-        if len(contact) < 3:
-            return jsonify({"ok": False, "error": "Contact bhejo"}), 400
+        if app_key not in APPS: return jsonify({"ok": False, "error": "App select karo"}), 400
+        if plan_key not in PLANS: return jsonify({"ok": False, "error": "Plan select karo"}), 400
+        if len(name) < 2: return jsonify({"ok": False, "error": "Naam chhota"}), 400
+        if len(contact) < 3: return jsonify({"ok": False, "error": "Contact bhejo"}), 400
         if len(utr) < 10 or len(utr) > 30 or not re.match(r'^[A-Za-z0-9]+$', utr):
-            return jsonify({"ok": False, "error": "UTR invalid (min 10 chars, no spaces)"}), 400
+            return jsonify({"ok": False, "error": "UTR invalid (min 10, no space)"}), 400
+        if not screenshot_data: return jsonify({"ok": False, "error": "Screenshot upload karo"}), 400
+
+        screenshot_filename = ""
+        try:
+            b64 = screenshot_data.split(",", 1)[1] if "," in screenshot_data else screenshot_data
+            img_bytes = base64.b64decode(b64)
+            if len(img_bytes) > 5 * 1024 * 1024:
+                return jsonify({"ok": False, "error": "Image 5MB se badi"}), 400
+            screenshot_filename = f"pay_{secrets.token_hex(8)}.png"
+            with open(os.path.join(UPLOAD_DIR, screenshot_filename), "wb") as f:
+                f.write(img_bytes)
+        except Exception as ex:
+            return jsonify({"ok": False, "error": f"Screenshot fail: {str(ex)}"}), 400
 
         con = db(); c = con.cursor()
-        c.execute("SELECT id FROM orders WHERE utr = ?", (utr,))
+        c.execute("SELECT id FROM orders WHERE utr=?", (utr,))
         if c.fetchone():
             con.close()
-            return jsonify({"ok": False, "error": "Ye UTR pehle use ho chuka hai"}), 400
+            return jsonify({"ok": False, "error": "UTR already used"}), 400
 
+        score, reason = calc_risk(utr, name, contact, screenshot_filename)
         plan = PLANS[plan_key]
-        c.execute("""INSERT INTO orders(app, plan, price, name, contact, utr, status, created_at)
-                     VALUES(?,?,?,?,?,?,?,?)""",
+        c.execute("""INSERT INTO orders(app,plan,price,name,contact,utr,screenshot,
+                     risk_score,risk_reason,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
                   (app_key, plan_key, plan["price"], name, contact, utr,
-                   "pending", datetime.now().isoformat()))
+                   screenshot_filename, score, reason, "pending",
+                   datetime.now().isoformat()))
         oid = c.lastrowid
         con.commit(); con.close()
-
-        return jsonify({"ok": True, "order_id": oid,
-                        "app": APPS[app_key]["name"], "plan": plan["name"],
-                        "amount": plan["price"]})
+        return jsonify({"ok": True, "order_id": oid, "risk": score})
     except Exception as ex:
         return jsonify({"ok": False, "error": str(ex)}), 500
 
@@ -119,8 +161,7 @@ def order_status(oid):
     con = db(); c = con.cursor()
     c.execute("SELECT status, key_given FROM orders WHERE id=?", (oid,))
     row = c.fetchone(); con.close()
-    if not row:
-        return jsonify({"ok": False}), 404
+    if not row: return jsonify({"ok": False}), 404
     return jsonify({"ok": True, "status": row[0], "key": row[1]})
 
 
@@ -143,24 +184,25 @@ def admin_logout():
 @admin_required
 def admin_panel():
     con = db(); c = con.cursor()
-    c.execute("SELECT id, app, plan, price, name, contact, utr, created_at FROM orders WHERE status='pending' ORDER BY id DESC")
+    c.execute("""SELECT id,app,plan,price,name,contact,utr,screenshot,risk_score,risk_reason,created_at
+                 FROM orders WHERE status='pending' ORDER BY risk_score DESC, id DESC""")
     pending = c.fetchall()
-    c.execute("SELECT id, app, plan, name, contact, key_given, approved_at FROM orders WHERE status='approved' ORDER BY id DESC LIMIT 30")
+    c.execute("""SELECT id,app,plan,name,contact,key_given,risk_score,approved_at
+                 FROM orders WHERE status='approved' ORDER BY id DESC LIMIT 50""")
     approved = c.fetchall()
-    c.execute("SELECT id, app, plan, name, contact FROM orders WHERE status='rejected' ORDER BY id DESC LIMIT 20")
+    c.execute("""SELECT id,app,plan,name,contact,risk_score FROM orders
+                 WHERE status='rejected' ORDER BY id DESC LIMIT 30""")
     rejected = c.fetchall()
-    c.execute("SELECT app, plan, COUNT(*) FROM keys WHERE used=0 GROUP BY app, plan")
+    c.execute("SELECT app,plan,COUNT(*) FROM keys WHERE used=0 GROUP BY app,plan")
     stock = {}
-    for a, p, cnt in c.fetchall():
-        stock[f"{a}|{p}"] = cnt
+    for a, p, cnt in c.fetchall(): stock[f"{a}|{p}"] = cnt
     c.execute("SELECT COUNT(*) FROM orders WHERE status='approved'")
     total_sales = c.fetchone()[0]
     c.execute("SELECT SUM(price) FROM orders WHERE status='approved'")
     revenue = c.fetchone()[0] or 0
     con.close()
-    return render_template("admin.html",
-        pending=pending, approved=approved, rejected=rejected,
-        stock=stock, apps=APPS, plans=PLANS,
+    return render_template("admin.html", pending=pending, approved=approved,
+        rejected=rejected, stock=stock, apps=APPS, plans=PLANS,
         total_sales=total_sales, revenue=revenue)
 
 
@@ -169,18 +211,17 @@ def admin_panel():
 def admin_addkeys():
     try:
         data = request.get_json() or {}
-        app_key = data.get("app", "").strip()
-        plan_key = data.get("plan", "").strip()
-        keys_text = data.get("keys", "").strip()
+        app_key = data.get("app","").strip()
+        plan_key = data.get("plan","").strip()
+        keys_text = data.get("keys","").strip()
         if app_key not in APPS or plan_key not in PLANS:
-            return jsonify({"ok": False, "error": "App/Plan invalid"}), 400
+            return jsonify({"ok": False, "error": "Invalid"}), 400
         keys = [k.strip() for k in re.split(r'[\n,]+', keys_text) if k.strip()]
-        if not keys:
-            return jsonify({"ok": False, "error": "Koi key nahi mili"}), 400
+        if not keys: return jsonify({"ok": False, "error": "Keys daalo"}), 400
         con = db(); c = con.cursor(); added = 0; dup = 0
         for k in keys:
             try:
-                c.execute("INSERT INTO keys(app, plan, key, used, added_at) VALUES(?,?,?,0,?)",
+                c.execute("INSERT INTO keys(app,plan,key,used,added_at) VALUES(?,?,?,0,?)",
                           (app_key, plan_key, k, datetime.now().isoformat()))
                 added += 1
             except sqlite3.IntegrityError:
@@ -196,21 +237,14 @@ def admin_addkeys():
 def admin_approve(oid):
     try:
         con = db(); c = con.cursor()
-        c.execute("SELECT app, plan, status FROM orders WHERE id=?", (oid,))
+        c.execute("SELECT app,plan,status FROM orders WHERE id=?", (oid,))
         row = c.fetchone()
-        if not row:
-            con.close()
-            return jsonify({"ok": False, "error": "Order nahi mila"}), 404
-        if row[2] != "pending":
-            con.close()
-            return jsonify({"ok": False, "error": "Already handled"}), 400
+        if not row: con.close(); return jsonify({"ok": False, "error": "Order nahi mila"}), 404
+        if row[2] != "pending": con.close(); return jsonify({"ok": False, "error": "Already"}), 400
         app_key, plan_key = row[0], row[1]
-        c.execute("SELECT id, key FROM keys WHERE app=? AND plan=? AND used=0 LIMIT 1",
-                  (app_key, plan_key))
+        c.execute("SELECT id,key FROM keys WHERE app=? AND plan=? AND used=0 LIMIT 1", (app_key, plan_key))
         k = c.fetchone()
-        if not k:
-            con.close()
-            return jsonify({"ok": False, "error": "Stock khatam!"}), 400
+        if not k: con.close(); return jsonify({"ok": False, "error": "Stock khatam"}), 400
         key_id, key_text = k
         now = datetime.now().isoformat()
         c.execute("UPDATE keys SET used=1 WHERE id=?", (key_id,))
@@ -227,6 +261,24 @@ def admin_approve(oid):
 def admin_reject(oid):
     con = db(); c = con.cursor()
     c.execute("UPDATE orders SET status='rejected' WHERE id=?", (oid,))
+    con.commit(); con.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/admin/stock-list/<app_k>/<plan_k>")
+@admin_required
+def stock_list(app_k, plan_k):
+    con = db(); c = con.cursor()
+    c.execute("SELECT id,key,used FROM keys WHERE app=? AND plan=? ORDER BY id", (app_k, plan_k))
+    rows = c.fetchall(); con.close()
+    return jsonify({"ok": True, "keys": [{"id": r[0], "key": r[1], "used": r[2]} for r in rows]})
+
+
+@app.route("/admin/delete-key/<int:kid>", methods=["POST"])
+@admin_required
+def admin_delete_key(kid):
+    con = db(); c = con.cursor()
+    c.execute("DELETE FROM keys WHERE id=?", (kid,))
     con.commit(); con.close()
     return jsonify({"ok": True})
 

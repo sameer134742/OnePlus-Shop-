@@ -7,225 +7,285 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
-  body { background:#000; color:#fff; padding:16px; min-height:100vh; }
+  body { background:#000; color:#fff; padding:16px; min-height:100vh; padding-bottom:80px; }
   .wrap { max-width:900px; margin:0 auto; }
-  .head { display:flex; align-items:center; justify-content:space-between; padding:16px 0; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,.08); flex-wrap:wrap; gap:10px; }
-  .head h1 { font-size:20px; font-weight:900; }
+  .head { display:flex; align-items:center; justify-content:space-between; padding:14px 0; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,.08); flex-wrap:wrap; gap:10px; }
+  .head h1 { font-size:18px; font-weight:900; }
   .head h1 .red { color:#eb0028; }
-  .logout { padding:8px 16px; background:rgba(235,0,40,.1); color:#eb0028; text-decoration:none; border-radius:8px; font-size:12px; font-weight:800; border:1px solid rgba(235,0,40,.3); }
-  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:24px; }
-  .stat { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; text-align:center; }
-  .stat .num { font-size:24px; font-weight:900; color:#eb0028; }
-  .stat .lbl { font-size:11px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
-  .section { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:20px; margin-bottom:20px; }
-  .section h2 { font-size:16px; font-weight:900; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-  .section h2 .count { background:#eb0028; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; }
-  .order { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:14px; margin-bottom:10px; }
-  .order-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
-  .order-id { font-size:13px; font-weight:900; color:#eb0028; }
-  .order-app { font-size:11px; padding:3px 9px; border-radius:10px; background:rgba(255,255,255,.05); }
-  .order-row { display:flex; justify-content:space-between; font-size:12px; color:#bbb; padding:3px 0; }
-  .order-row b { color:#fff; font-weight:700; }
+  .logout { padding:7px 14px; background:rgba(235,0,40,.1); color:#eb0028; text-decoration:none; border-radius:8px; font-size:11px; font-weight:800; border:1px solid rgba(235,0,40,.3); }
+  .tabs { display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:6px; }
+  .tab { padding:9px 16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#aaa; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .tab.active { background:#eb0028; color:#fff; border-color:#eb0028; }
+  .panel { display:none; } .panel.active { display:block; }
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+  .stat { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px; text-align:center; }
+  .stat .num { font-size:22px; font-weight:900; color:#eb0028; }
+  .stat .lbl { font-size:10px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .section { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .section h2 { font-size:15px; font-weight:900; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .section h2 .count { background:#eb0028; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px; }
+  .order { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:13px; margin-bottom:12px; }
+  .order.high-risk { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
+  .order.medium-risk { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.03); }
+  .order-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .order-id { font-size:12px; font-weight:900; color:#eb0028; }
+  .order-app { font-size:10px; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .risk-badge { padding:3px 9px; border-radius:20px; font-size:9px; font-weight:900; letter-spacing:.5px; text-transform:uppercase; }
+  .risk-high { background:rgba(239,68,68,.2); color:#ef4444; border:1px solid rgba(239,68,68,.4); }
+  .risk-medium { background:rgba(245,158,11,.2); color:#f59e0b; border:1px solid rgba(245,158,11,.4); }
+  .risk-low { background:rgba(234,179,8,.15); color:#eab308; border:1px solid rgba(234,179,8,.3); }
+  .risk-safe { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+  .order-row { display:flex; justify-content:space-between; font-size:12px; color:#bbb; padding:2px 0; }
+  .order-row b { color:#fff; }
   .order-utr { font-family:monospace; background:rgba(235,0,40,.1); padding:2px 6px; border-radius:4px; font-size:11px; color:#eb0028; }
+  .screenshot-box { margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.08); background:#050505; }
+  .screenshot-box img { width:100%; display:block; max-height:400px; object-fit:contain; }
+  .screenshot-label { font-size:10px; color:#888; padding:6px 10px; background:rgba(255,255,255,.03); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .risk-reason { font-size:11px; color:#f59e0b; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); padding:8px 10px; border-radius:8px; margin-top:8px; line-height:1.5; }
+  .risk-reason.high { color:#ef4444; background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.25); }
   .actions { display:flex; gap:8px; margin-top:12px; }
   .btn-approve, .btn-reject { flex:1; padding:11px; border:none; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; }
   .btn-approve { background:#22c55e; color:#fff; }
   .btn-reject { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid rgba(239,68,68,.3); }
   .key-box { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:10px 12px; margin-top:10px; }
   .key-box .label { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
-  .key-box .key { font-family:monospace; font-size:14px; font-weight:800; color:#22c55e; word-break:break-all; margin-top:4px; }
+  .key-box .key { font-family:monospace; font-size:13px; font-weight:800; color:#22c55e; word-break:break-all; margin-top:4px; }
   .add-form { display:grid; gap:12px; }
   .add-form select, .add-form textarea { width:100%; padding:11px 13px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#fff; font-size:13px; font-family:inherit; outline:none; }
   .add-form textarea { min-height:100px; resize:vertical; font-family:monospace; }
   .add-form button { padding:14px; background:#eb0028; color:#fff; border:none; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
   .add-form label { font-size:11px; color:#aaa; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
-  .stock-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .stock-item { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px; text-align:center; }
+  .stock-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .stock-item { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:11px 8px; text-align:center; cursor:pointer; }
   .stock-item .n { font-size:20px; font-weight:900; }
-  .stock-item .n.ok { color:#22c55e; }
-  .stock-item .n.low { color:#f59e0b; }
-  .stock-item .n.zero { color:#ef4444; }
+  .stock-item .n.ok { color:#22c55e; } .stock-item .n.low { color:#f59e0b; } .stock-item .n.zero { color:#ef4444; }
   .stock-item .app { font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-top:2px; }
   .stock-item .plan { font-size:11px; font-weight:800; margin-top:2px; }
-  .empty { text-align:center; color:#666; padding:20px; font-size:13px; }
-  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(34,197,94,.95); color:#fff; padding:12px 20px; border-radius:10px; font-weight:700; font-size:13px; z-index:999; display:none; max-width:90vw; text-align:center; }
+  .empty { text-align:center; color:#666; padding:18px; font-size:13px; }
+  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(34,197,94,.95); color:#fff; padding:11px 20px; border-radius:10px; font-weight:700; font-size:12px; z-index:999; display:none; max-width:90vw; text-align:center; }
   .toast.error { background:rgba(239,68,68,.95); }
   .toast.show { display:block; }
-  @media (min-width: 600px) {
-    .stats { grid-template-columns:repeat(4,1fr); }
-    .stock-grid { grid-template-columns:repeat(5,1fr); }
-  }
+  .modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.9); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:16px; max-width:420px; width:100%; max-height:80vh; overflow-y:auto; padding:20px; }
+  .modal h3 { font-size:15px; font-weight:900; margin-bottom:14px; }
+  .keyline { font-family:monospace; font-size:12px; padding:8px 10px; background:rgba(255,255,255,.03); border-radius:8px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .keyline .k { word-break:break-all; flex:1; }
+  .keyline .s { font-size:10px; padding:2px 8px; border-radius:8px; }
+  .keyline .s.used { background:rgba(239,68,68,.15); color:#ef4444; }
+  .keyline .s.free { background:rgba(34,197,94,.15); color:#22c55e; }
+  .keyline .del { background:rgba(239,68,68,.15); color:#ef4444; border:none; padding:4px 8px; border-radius:6px; font-size:10px; cursor:pointer; font-family:inherit; font-weight:700; }
+  .modal .close { margin-top:12px; width:100%; padding:11px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:9px; color:#fff; font-weight:700; cursor:pointer; font-family:inherit; }
+  .big-warn { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:11px; color:#fca5a5; font-weight:700; }
+  @media (min-width:600px) { .stats { grid-template-columns:repeat(4,1fr); } .stock-grid { grid-template-columns:repeat(5,1fr); } }
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <div class="head">
-  <h1>👑 ONE<span class="red">PLUS</span> Admin Panel</h1>
+  <h1>👑 ONE<span class="red">PLUS</span> Admin</h1>
   <a class="logout" href="/admin/logout">LOGOUT</a>
 </div>
 
-<div class="stats">
-  <div class="stat"><div class="num">{{ pending|length }}</div><div class="lbl">Pending</div></div>
-  <div class="stat"><div class="num">{{ total_sales }}</div><div class="lbl">Sales</div></div>
-  <div class="stat"><div class="num">₹{{ revenue }}</div><div class="lbl">Revenue</div></div>
-  <div class="stat"><div class="num">{{ approved|length }}</div><div class="lbl">Recent</div></div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('orders',this)">⏳ Orders <span style="opacity:.7;">({{ pending|length }})</span></div>
+  <div class="tab" onclick="switchTab('keys',this)">➕ Add Keys</div>
+  <div class="tab" onclick="switchTab('stock',this)">📦 Stock</div>
+  <div class="tab" onclick="switchTab('history',this)">📜 History</div>
 </div>
 
-<div class="section">
-  <h2>📦 Stock</h2>
-  <div class="stock-grid">
-    {% for app_k, app_v in apps.items() %}
-      {% for plan_k, plan_v in plans.items() %}
-        {% set cnt = stock.get(app_k ~ '|' ~ plan_k, 0) %}
-        <div class="stock-item">
-          <div class="n {% if cnt == 0 %}zero{% elif cnt < 5 %}low{% else %}ok{% endif %}">{{ cnt }}</div>
-          <div class="app">{{ app_v.name }}</div>
-          <div class="plan">{{ plan_v.name }}</div>
+<div class="panel active" id="panel-orders">
+  <div class="stats">
+    <div class="stat"><div class="num">{{ pending|length }}</div><div class="lbl">Pending</div></div>
+    <div class="stat"><div class="num">{{ total_sales }}</div><div class="lbl">Sales</div></div>
+    <div class="stat"><div class="num">₹{{ revenue }}</div><div class="lbl">Revenue</div></div>
+    <div class="stat"><div class="num">{{ approved|length }}</div><div class="lbl">Recent</div></div>
+  </div>
+
+  <div class="section">
+    <h2>⏳ Pending Orders <span class="count">{{ pending|length }}</span></h2>
+    {% if pending %}
+      {% for o in pending %}
+      {% set score = o[8] or 0 %}
+      {% set rlabel = 'HIGH' if score >= 70 else ('MEDIUM' if score >= 40 else ('LOW' if score >= 20 else 'SAFE')) %}
+      <div class="order {% if score >= 70 %}high-risk{% elif score >= 40 %}medium-risk{% endif %}" id="order-{{ o[0] }}">
+        <div class="order-top">
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span class="order-id">Order #{{ o[0] }}</span>
+            <span class="risk-badge risk-{{ rlabel|lower }}">{{ rlabel }} {{ score }}%</span>
+          </div>
+          <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }} · ₹{{ o[3] }}</span>
         </div>
+        <div class="order-row"><span>👤 Name</span><b>{{ o[4] }}</b></div>
+        <div class="order-row"><span>💬 Contact</span><b>{{ o[5] }}</b></div>
+        <div class="order-row"><span>🧾 UTR</span><span class="order-utr">{{ o[6] }}</span></div>
+
+        {% if o[7] %}
+        <div class="screenshot-box">
+          <div class="screenshot-label">📸 Payment Screenshot</div>
+          <img src="/static/uploads/{{ o[7] }}" alt="Payment" loading="lazy">
+        </div>
+        {% else %}
+        <div class="big-warn">⚠️ Screenshot missing</div>
+        {% endif %}
+
+        {% if o[9] %}
+        <div class="risk-reason {% if score >= 70 %}high{% endif %}">⚠️ <b>Risk:</b> {{ o[9] }}</div>
+        {% endif %}
+
+        <div class="actions">
+          <button class="btn-approve" onclick="approveOrder({{ o[0] }})">✅ APPROVE</button>
+          <button class="btn-reject" onclick="rejectOrder({{ o[0] }})">❌ REJECT</button>
+        </div>
+      </div>
       {% endfor %}
-    {% endfor %}
+    {% else %}<div class="empty">✅ Koi pending order nahi</div>{% endif %}
   </div>
 </div>
 
-<div class="section">
-  <h2>➕ Add Keys</h2>
-  <div class="add-form">
-    <div>
-      <label>App</label>
-      <select id="addApp">
-        {% for k, v in apps.items() %}
-        <option value="{{ k }}">{{ v.name }}</option>
+<div class="panel" id="panel-keys">
+  <div class="section">
+    <h2>➕ Add Keys</h2>
+    <div class="add-form">
+      <div><label>App</label>
+        <select id="addApp">{% for k,v in apps.items() %}<option value="{{ k }}">{{ v.name }}</option>{% endfor %}</select>
+      </div>
+      <div><label>Plan</label>
+        <select id="addPlan">{% for k,v in plans.items() %}<option value="{{ k }}">{{ v.name }} — ₹{{ v.price }}</option>{% endfor %}</select>
+      </div>
+      <div><label>Keys (ek line me ek)</label>
+        <textarea id="addKeysText" placeholder="KEY-001&#10;KEY-002&#10;KEY-003"></textarea>
+      </div>
+      <button onclick="addKeys()">+ ADD KEYS</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-stock">
+  <div class="section">
+    <h2>📦 Stock Overview</h2>
+    <p style="font-size:11px;color:#888;margin-bottom:12px;">Box pe tap karo — saari keys dekho / delete karo</p>
+    <div class="stock-grid">
+      {% for app_k, app_v in apps.items() %}
+        {% for plan_k, plan_v in plans.items() %}
+          {% set cnt = stock.get(app_k ~ '|' ~ plan_k, 0) %}
+          <div class="stock-item" onclick="viewStock('{{ app_k }}','{{ plan_k }}','{{ app_v.name }} · {{ plan_v.name }}')">
+            <div class="n {% if cnt == 0 %}zero{% elif cnt < 5 %}low{% else %}ok{% endif %}">{{ cnt }}</div>
+            <div class="app">{{ app_v.name }}</div>
+            <div class="plan">{{ plan_v.name }}</div>
+          </div>
         {% endfor %}
-      </select>
+      {% endfor %}
     </div>
-    <div>
-      <label>Plan</label>
-      <select id="addPlan">
-        {% for k, v in plans.items() %}
-        <option value="{{ k }}">{{ v.name }} — ₹{{ v.price }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Keys (ek line me ek)</label>
-      <textarea id="addKeysText" placeholder="KEY-001&#10;KEY-002&#10;KEY-003"></textarea>
-    </div>
-    <button onclick="addKeys()">+ ADD KEYS</button>
   </div>
 </div>
 
-<div class="section">
-  <h2>⏳ Pending Orders <span class="count">{{ pending|length }}</span></h2>
-  {% if pending %}
-    {% for o in pending %}
-    <div class="order" id="order-{{ o[0] }}">
-      <div class="order-top">
-        <span class="order-id">Order #{{ o[0] }}</span>
-        <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }} · ₹{{ o[3] }}</span>
+<div class="panel" id="panel-history">
+  <div class="section">
+    <h2>✅ Recently Approved</h2>
+    {% if approved %}
+      {% for o in approved %}
+      <div class="order">
+        <div class="order-top">
+          <span class="order-id">Order #{{ o[0] }}</span>
+          <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }}</span>
+        </div>
+        <div class="order-row"><span>👤 {{ o[3] }}</span><b>{{ o[4] }}</b></div>
+        {% if o[5] %}<div class="key-box"><div class="label">Key Delivered</div><div class="key">{{ o[5] }}</div></div>{% endif %}
       </div>
-      <div class="order-row"><span>👤 Name</span><b>{{ o[4] }}</b></div>
-      <div class="order-row"><span>💬 Contact</span><b>{{ o[5] }}</b></div>
-      <div class="order-row"><span>🧾 UTR</span><span class="order-utr">{{ o[6] }}</span></div>
-      <div class="actions">
-        <button class="btn-approve" onclick="approveOrder({{ o[0] }})">✅ APPROVE</button>
-        <button class="btn-reject" onclick="rejectOrder({{ o[0] }})">❌ REJECT</button>
-      </div>
-    </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty">✅ Koi pending order nahi</div>
-  {% endif %}
-</div>
-
-<div class="section">
-  <h2>✅ Recently Approved</h2>
-  {% if approved %}
-    {% for o in approved %}
-    <div class="order">
-      <div class="order-top">
-        <span class="order-id">Order #{{ o[0] }}</span>
-        <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }}</span>
-      </div>
-      <div class="order-row"><span>👤 {{ o[3] }}</span><b>{{ o[4] }}</b></div>
-      {% if o[5] %}
-      <div class="key-box">
-        <div class="label">Key Delivered</div>
-        <div class="key">{{ o[5] }}</div>
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty">Abhi tak koi order approve nahi hua</div>
-  {% endif %}
-</div>
-
-{% if rejected %}
-<div class="section">
-  <h2>❌ Rejected</h2>
-  {% for o in rejected %}
-  <div class="order">
-    <div class="order-row"><span>#{{ o[0] }}</span><b>{{ o[3] }} · {{ o[4] }}</b></div>
+      {% endfor %}
+    {% else %}<div class="empty">Koi order nahi</div>{% endif %}
   </div>
-  {% endfor %}
 </div>
-{% endif %}
 
+</div>
+
+<div class="modal-overlay" id="stockModal" onclick="if(event.target.id==='stockModal')this.classList.remove('show')">
+  <div class="modal">
+    <h3 id="stockTitle">Stock</h3>
+    <div id="stockList"></div>
+    <button class="close" onclick="document.getElementById('stockModal').classList.remove('show')">CLOSE</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-function showToast(msg, err) {
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+function showToast(msg, err){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show' + (err ? ' error' : '');
   setTimeout(() => t.className = 'toast', 3000);
 }
 
-async function addKeys() {
+async function addKeys(){
   const app = document.getElementById('addApp').value;
   const plan = document.getElementById('addPlan').value;
   const keys = document.getElementById('addKeysText').value;
-  if (!keys.trim()) { showToast('❌ Keys daalo', true); return; }
+  if (!keys.trim()){ showToast('❌ Keys daalo', true); return; }
   const res = await fetch('/admin/addkeys', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({app, plan, keys})
   });
   const d = await res.json();
-  if (d.ok) {
-    showToast(`✅ ${d.added} keys add hui${d.duplicate ? ', ' + d.duplicate + ' duplicate' : ''}`);
+  if (d.ok){
+    showToast(`✅ ${d.added} keys add${d.duplicate ? ', ' + d.duplicate + ' dup' : ''}`);
     document.getElementById('addKeysText').value = '';
-    setTimeout(() => location.reload(), 1000);
-  } else {
-    showToast('❌ ' + d.error, true);
-  }
+    setTimeout(() => location.reload(), 1200);
+  } else { showToast('❌ ' + d.error, true); }
 }
 
-async function approveOrder(oid) {
+async function approveOrder(oid){
   const res = await fetch('/admin/approve/' + oid, {method:'POST'});
   const d = await res.json();
-  if (d.ok) {
+  if (d.ok){
     showToast(`✅ Key: ${d.key}`);
     const el = document.getElementById('order-' + oid);
     if (el) el.innerHTML = `<div class="key-box"><div class="label">Key Delivered</div><div class="key">${d.key}</div></div>`;
-    setTimeout(() => location.reload(), 2500);
-  } else {
-    showToast('❌ ' + d.error, true);
-  }
+    setTimeout(() => location.reload(), 2000);
+  } else { showToast('❌ ' + d.error, true); }
 }
 
-async function rejectOrder(oid) {
-  if (!confirm('Reject this order?')) return;
-  const res = await fetch('/admin/reject/' + oid, {method:'POST'});
+async function rejectOrder(oid){
+  if (!confirm('Reject?')) return;
+  await fetch('/admin/reject/' + oid, {method:'POST'});
+  showToast('✅ Rejected');
+  setTimeout(() => location.reload(), 1000);
+}
+
+async function viewStock(app, plan, title){
+  const res = await fetch('/admin/stock-list/' + app + '/' + plan);
   const d = await res.json();
-  if (d.ok) {
-    showToast('✅ Rejected');
-    const el = document.getElementById('order-' + oid);
-    if (el) el.style.opacity = '0.3';
-    setTimeout(() => location.reload(), 1200);
+  document.getElementById('stockTitle').textContent = title + ' (' + d.keys.length + ')';
+  const el = document.getElementById('stockList');
+  if (!d.keys.length){
+    el.innerHTML = '<div class="empty">Koi key nahi</div>';
+  } else {
+    el.innerHTML = d.keys.map(k => 
+      `<div class="keyline">
+        <span class="k">${k.key}</span>
+        <span class="s ${k.used ? 'used' : 'free'}">${k.used ? 'USED' : 'FREE'}</span>
+        <button class="del" onclick="deleteKey(${k.id})">🗑️</button>
+      </div>`
+    ).join('');
   }
+  document.getElementById('stockModal').classList.add('show');
+}
+
+async function deleteKey(kid){
+  if (!confirm('Delete this key?')) return;
+  const res = await fetch('/admin/delete-key/' + kid, {method:'POST'});
+  const d = await res.json();
+  if (d.ok){ showToast('✅ Key deleted'); setTimeout(() => location.reload(), 800); }
+  else { showToast('❌ Failed', true); }
 }
 </script>
 </body>
