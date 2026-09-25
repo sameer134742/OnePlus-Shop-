@@ -19,8 +19,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 APPS = {
-    "starplus":  {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
-    "oneplus":   {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
+    "starplus":  {"name": "Star Plus",            "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
+    "oneplus":   {"name": "OnePlus",              "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
     "admin":     {"name": "OnePlus Admin Server", "icon": "⚙️", "color": "#22c55e", "img": "app_fanloader.png"},
 }
 
