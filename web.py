@@ -19,8 +19,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 APPS = {
-    "oneplus":   {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
-    "starplus":  {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
+    "starplus":  {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
+    "oneplus":   {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
     "admin":     {"name": "OnePlus Admin Server", "icon": "⚙️", "color": "#22c55e", "img": "app_fanloader.png"},
 }
 
@@ -39,7 +39,6 @@ def db():
 
 def init_db():
     con = db(); c = con.cursor()
-    # Agar purana schema hai (risk_score missing) to DB delete karo
     try:
         c.execute("SELECT risk_score FROM orders LIMIT 1")
     except:
@@ -132,7 +131,7 @@ def create_order():
             with open(os.path.join(UPLOAD_DIR, screenshot_filename), "wb") as f:
                 f.write(img_bytes)
         except Exception as ex:
-            return jsonify({"ok": False, "error": f"Screenshot fail"}), 400
+            return jsonify({"ok": False, "error": "Screenshot fail"}), 400
 
         con = db(); c = con.cursor()
         c.execute("SELECT id FROM orders WHERE utr=?", (utr,))

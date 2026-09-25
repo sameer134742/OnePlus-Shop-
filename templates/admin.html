@@ -2,597 +2,285 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<meta name="theme-color" content="#eb0028">
-<title>{{ brand }} — Premium Keys | Instant Delivery</title>
-<link rel="icon" type="image/png" href="/static/app_oneplus.png">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; -webkit-tap-highlight-color:transparent; }
-  :root { --bg:#000; --card:#0b0b0b; --border:rgba(255,255,255,.08); --red:#eb0028; --text:#fff; --muted:#888; }
-  html { scroll-behavior:smooth; }
-  body { background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
-
-  body.theme-1 { --red:#eb0028; --theme-primary:#eb0028; }
-  body.theme-2 { --red:#a855f7; --theme-primary:#a855f7; }
-  body.theme-3 { --red:#22c55e; --theme-primary:#22c55e; }
-  body.theme-4 { --red:#f59e0b; --theme-primary:#f59e0b; }
-  body.theme-5 { --red:#3b82f6; --theme-primary:#3b82f6; }
-  body.theme-1 .orb-1 { background:#eb0028 !important; }
-  body.theme-1 .orb-2 { background:#ff1a3d !important; }
-  body.theme-1 .orb-3 { background:#22c55e !important; }
-  body.theme-2 .orb-1 { background:#a855f7 !important; }
-  body.theme-2 .orb-2 { background:#ec4899 !important; }
-  body.theme-2 .orb-3 { background:#8b5cf6 !important; }
-  body.theme-3 .orb-1 { background:#22c55e !important; }
-  body.theme-3 .orb-2 { background:#06b6d4 !important; }
-  body.theme-3 .orb-3 { background:#10b981 !important; }
-  body.theme-4 .orb-1 { background:#f59e0b !important; }
-  body.theme-4 .orb-2 { background:#ef4444 !important; }
-  body.theme-4 .orb-3 { background:#fbbf24 !important; }
-  body.theme-5 .orb-1 { background:#3b82f6 !important; }
-  body.theme-5 .orb-2 { background:#8b5cf6 !important; }
-  body.theme-5 .orb-3 { background:#06b6d4 !important; }
-  body, .orb, .btn-red, .nav-btn, .logo-mark, .check, .plan-btn, .submit-btn, .app.active {
-    transition: background 0.8s ease, color 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease !important;
-  }
-  .bg-orbs { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-  .orb { position:absolute; border-radius:50%; filter:blur(100px); opacity:.35; animation:float 20s ease-in-out infinite; }
-  .orb-1 { width:500px; height:500px; background:#eb0028; top:-150px; left:-150px; }
-  .orb-2 { width:400px; height:400px; background:#a855f7; bottom:-100px; right:-100px; animation-delay:-7s; }
-  .orb-3 { width:350px; height:350px; background:#22c55e; top:40%; left:60%; animation-delay:-14s; opacity:.2; }
-  @keyframes float { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(80px,-60px) scale(1.15);} 66%{transform:translate(-60px,80px) scale(.9);} }
-  .grid-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
-    background-image:linear-gradient(rgba(235,0,40,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(235,0,40,.03) 1px,transparent 1px);
-    background-size:50px 50px;
-    mask-image:radial-gradient(circle at center,black 30%,transparent 80%);
-    -webkit-mask-image:radial-gradient(circle at center,black 30%,transparent 80%); }
-  #threeCanvas { position:fixed; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
-  .content { position:relative; z-index:2; }
-  nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:12px 20px; backdrop-filter:blur(24px); background:rgba(0,0,0,.7); border-bottom:1px solid var(--border); }
-  .nav-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
-  .logo { display:flex; align-items:center; gap:9px; font-weight:900; font-size:16px; letter-spacing:2px; }
-  .logo-mark { width:28px; height:28px; border-radius:7px; background:var(--red); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:900; color:#fff; box-shadow:0 0 22px var(--red); animation:logoSpin 6s ease-in-out infinite; }
-  @keyframes logoSpin { 0%,100%{transform:rotateY(0);} 50%{transform:rotateY(360deg);} }
-  .logo-text .red { color:var(--red); }
-  .nav-actions { display:flex; align-items:center; gap:8px; }
-  .live-badge { display:flex; align-items:center; gap:5px; padding:5px 11px; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3); border-radius:30px; font-size:10px; font-weight:800; color:#22c55e; text-transform:uppercase; }
-  .live-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px #22c55e; animation:pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
-  .nav-btn { padding:8px 16px; background:var(--red); color:#fff; text-decoration:none; border-radius:8px; font-weight:800; font-size:11px; letter-spacing:.5px; box-shadow:0 0 18px var(--red); }
-  .hero { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:100px 20px 40px; }
-  .hero-logo-wrap { width:clamp(260px,65vw,420px); margin:0 auto 20px; position:relative; animation:heroFloat 4s ease-in-out infinite; }
-  @keyframes heroFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
-  .hero-logo-wrap img { width:100%; height:auto; display:block; mix-blend-mode:screen; filter:contrast(1.2) brightness(1.1) saturate(1.3) drop-shadow(0 0 30px var(--red)) drop-shadow(0 0 60px rgba(34,197,94,.3)); }
-  .hero-logo-wrap::after { content:''; position:absolute; inset:-30%; background:radial-gradient(circle,var(--red) 0%,transparent 65%); opacity:.15; z-index:-1; pointer-events:none; animation:glow 3s ease-in-out infinite; }
-  @keyframes glow { 0%,100%{opacity:.15;} 50%{opacity:.3;} }
-  .hero h1 { font-size:clamp(20px,4vw,30px); font-weight:800; letter-spacing:-.5px; margin-bottom:10px; }
-  .hero h1 .red { color:var(--red); }
-  .hero p { font-size:13px; color:var(--muted); max-width:400px; line-height:1.7; margin:0 auto 28px; }
-  .trust-badges { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:30px; }
-  .tb { padding:5px 12px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:20px; font-size:11px; color:#aaa; font-weight:600; }
-  .hero-cta { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .btn-red { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:var(--red); color:#fff; text-decoration:none; border-radius:10px; font-weight:800; font-size:13px; box-shadow:0 0 30px var(--red); transition:transform .3s; }
-  .btn-red:hover { transform:translateY(-3px); }
-  .btn-outline { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:transparent; color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:all .3s; }
-  .btn-outline:hover { border-color:#fff; transform:translateY(-3px); }
-  .section { max-width:1100px; margin:0 auto; padding:50px 20px 100px; }
-  .section-head { text-align:center; margin-bottom:40px; }
-  .eyebrow { display:inline-block; font-size:10px; font-weight:800; color:var(--red); letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; }
-  .section-head h2 { font-size:clamp(24px,4.5vw,38px); font-weight:900; letter-spacing:-1.5px; line-height:1.1; margin-bottom:10px; }
-  .section-head h2 .red { color:var(--red); }
-  .section-head p { color:var(--muted); font-size:13px; }
-  .apps { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:36px; }
-  .app { position:relative; padding:18px 10px; background:var(--card); border:1px solid var(--border); border-radius:18px; text-align:center; cursor:pointer; transition:all .3s; overflow:hidden; }
-  .app:hover { transform:translateY(-4px); border-color:rgba(255,255,255,.2); }
-  .app.active { border-color:currentColor; box-shadow:0 0 35px -8px currentColor; }
-  .app.active::before { content:''; position:absolute; inset:0; border-radius:18px; background:radial-gradient(circle at center,currentColor 0%,transparent 70%); opacity:.12; pointer-events:none; }
-  .app-img { width:60px; height:60px; margin:0 auto 10px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:900; background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.1); overflow:hidden; transition:transform .4s; }
-  .app:hover .app-img { transform:scale(1.1); }
-  .app.active .app-img { transform:scale(1.08); }
-  .app-img img { width:100%; height:100%; object-fit:cover; }
-  .app-name { font-size:11px; font-weight:800; letter-spacing:.3px; color:#ccc; text-transform:uppercase; line-height:1.3; }
-  .app.active .app-name { color:#fff; }
-  .app-check { position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:currentColor; display:none; align-items:center; justify-content:center; font-size:11px; color:#000; font-weight:900; }
-  .app.active .app-check { display:flex; }
-  .plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
-  .plan { position:relative; padding:24px 20px; background:linear-gradient(180deg,#0d0d0d 0%,#050505 100%); border:1px solid var(--border); border-radius:18px; transition:all .4s; overflow:hidden; display:flex; flex-direction:column; }
-  .plan:hover { transform:translateY(-8px); border-color:var(--app-color,#eb0028); box-shadow:0 30px 60px -25px var(--app-color,#eb0028); }
-  .plan.hot { background:linear-gradient(180deg,color-mix(in srgb, var(--app-color,#eb0028) 10%, #0a0a0a) 0%,#050505 100%); border-color:color-mix(in srgb, var(--app-color,#eb0028) 40%, transparent); }
-  .plan-tag { position:absolute; top:12px; right:12px; padding:4px 10px; background:var(--app-color,#eb0028); color:#fff; font-size:9px; font-weight:900; border-radius:5px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 0 15px var(--app-color,#eb0028); }
-  .plan-tier { font-size:9px; font-weight:800; color:#555; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:10px; }
-  .plan-icon { font-size:30px; margin-bottom:10px; display:inline-block; transition:transform .5s; }
-  .plan:hover .plan-icon { transform:rotateY(360deg) scale(1.15); }
-  .plan-name { font-size:16px; font-weight:800; margin-bottom:2px; }
-  .plan-sub { font-size:11px; color:var(--muted); margin-bottom:14px; }
-  .plan-price { display:flex; align-items:baseline; gap:3px; }
-  .curr { font-size:15px; color:var(--muted); font-weight:600; }
-  .amt { font-size:38px; font-weight:900; letter-spacing:-2px; line-height:1; background:linear-gradient(90deg, #fff 0%, var(--app-color, #eb0028) 25%, #fff 50%, var(--app-color, #eb0028) 75%, #fff 100%); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation:priceShine 3s linear infinite; }
-  @keyframes priceShine { 0%{background-position:0% center;} 100%{background-position:200% center;} }
-  .per { font-size:11px; color:var(--muted); font-weight:500; margin-left:3px; }
-  .plan-old { font-size:11px; color:#555; text-decoration:line-through; margin-bottom:14px; }
-  .plan-features { list-style:none; margin-bottom:18px; padding-top:14px; border-top:1px solid var(--border); flex:1; }
-  .plan-features li { display:flex; align-items:center; gap:9px; padding:4px 0; font-size:12px; color:#bbb; }
-  .check { width:15px; height:15px; border-radius:50%; background:var(--app-color,#eb0028); display:flex; align-items:center; justify-content:center; font-size:8px; color:#fff; font-weight:900; flex-shrink:0; }
-  .plan-btn { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(255,255,255,.03); color:#fff; border:none; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; transition:all .3s; border:1px solid var(--border); }
-  .plan.hot .plan-btn { background:var(--app-color,#eb0028); border-color:var(--app-color,#eb0028); box-shadow:0 0 25px var(--app-color,#eb0028); }
-  .plan-btn:hover { background:var(--app-color,#eb0028); border-color:var(--app-color,#eb0028); transform:translateY(-2px); box-shadow:0 8px 30px var(--app-color,#eb0028); }
-  .live-stats { position:fixed; bottom:0; left:0; right:0; z-index:50; padding:10px 18px; background:rgba(8,8,8,.9); backdrop-filter:blur(20px); border-top:1px solid var(--border); }
-  .live-stats-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:24px; flex-wrap:wrap; }
-  .stat { display:flex; align-items:center; gap:7px; font-size:11px; color:#aaa; font-weight:700; }
-  .stat-icon { width:24px; height:24px; border-radius:6px; background:rgba(235,0,40,.1); border:1px solid rgba(235,0,40,.2); display:flex; align-items:center; justify-content:center; font-size:11px; }
-  .stat b { color:#fff; font-weight:800; font-size:12px; }
-  .stat.online b { color:#22c55e; }
-  .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.9); backdrop-filter:blur(12px); display:none; align-items:center; justify-content:center; padding:16px; }
-  .modal-overlay.show { display:flex; }
-  .modal { background:#0d0d0d; border:1px solid var(--border); border-radius:20px; max-width:440px; width:100%; max-height:90vh; overflow-y:auto; }
-  .modal-head { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#0d0d0d; z-index:2; border-radius:20px 20px 0 0; }
-  .modal-head h3 { font-size:15px; font-weight:800; }
-  .modal-head .close { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,.05); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:14px; }
-  .modal-body { padding:20px 22px 22px; }
-  .order-summary { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:rgba(235,0,40,.08); border:1px solid rgba(235,0,40,.2); border-radius:12px; margin-bottom:16px; }
-  .order-summary .lbl { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
-  .order-summary .val { font-size:15px; font-weight:900; margin-top:2px; }
-  .order-summary .val.rp { color:var(--modal-color,#eb0028); }
-  .form-group { margin-bottom:12px; }
-  .form-group label { display:block; font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-  .form-group input { width:100%; padding:11px 13px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:10px; color:#fff; font-size:13px; font-family:inherit; outline:none; transition:border-color .2s; }
-  .form-group input:focus { border-color:var(--modal-color,#eb0028); }
-  .form-group input[type=file] { padding:10px; cursor:pointer; }
-  .form-group input[type=file]::file-selector-button { background:#eb0028; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:11px; cursor:pointer; margin-right:8px; }
-  .form-group .hint { font-size:10px; color:#666; margin-top:4px; }
-  .qr-section { background:rgba(255,255,255,.02); border:1px dashed var(--border); border-radius:14px; padding:14px; text-align:center; margin-bottom:16px; }
-  .qr-img { width:140px; height:140px; margin:0 auto 10px; background:#fff; border-radius:12px; padding:8px; display:block; object-fit:contain; }
-  .upi-id { font-size:11px; font-weight:800; color:#fff; padding:6px 10px; background:rgba(235,0,40,.1); border:1px solid rgba(235,0,40,.25); border-radius:7px; display:inline-block; word-break:break-all; font-family:monospace; }
-  .upi-name { font-size:10px; color:#888; margin-top:5px; }
-  .security-note { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:11px; color:#8ccaa0; line-height:1.6; }
-  .security-note b { color:#22c55e; }
-  .submit-btn { width:100%; padding:14px; background:var(--modal-color,#eb0028); color:#fff; border:none; border-radius:11px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; transition:all .3s; }
-  .submit-btn:hover { transform:translateY(-2px); }
-  .submit-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-  .toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:rgba(34,197,94,.95); color:#fff; padding:12px 18px; border-radius:10px; font-weight:700; font-size:12px; z-index:300; display:none; max-width:90vw; text-align:center; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+  body { background:#000; color:#fff; padding:16px; min-height:100vh; padding-bottom:80px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  .head { display:flex; align-items:center; justify-content:space-between; padding:14px 0; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,.08); flex-wrap:wrap; gap:10px; }
+  .head h1 { font-size:18px; font-weight:900; }
+  .head h1 .red { color:#eb0028; }
+  .logout { padding:7px 14px; background:rgba(235,0,40,.1); color:#eb0028; text-decoration:none; border-radius:8px; font-size:11px; font-weight:800; border:1px solid rgba(235,0,40,.3); }
+  .tabs { display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:6px; }
+  .tab { padding:9px 16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#aaa; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .tab.active { background:#eb0028; color:#fff; border-color:#eb0028; }
+  .panel { display:none; } .panel.active { display:block; }
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+  .stat { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px; text-align:center; }
+  .stat .num { font-size:22px; font-weight:900; color:#eb0028; }
+  .stat .lbl { font-size:10px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .section { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .section h2 { font-size:15px; font-weight:900; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .section h2 .count { background:#eb0028; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px; }
+  .order { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:13px; margin-bottom:12px; }
+  .order.high-risk { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
+  .order.medium-risk { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.03); }
+  .order-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .order-id { font-size:12px; font-weight:900; color:#eb0028; }
+  .order-app { font-size:10px; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .risk-badge { padding:3px 9px; border-radius:20px; font-size:9px; font-weight:900; text-transform:uppercase; }
+  .risk-high { background:rgba(239,68,68,.2); color:#ef4444; border:1px solid rgba(239,68,68,.4); }
+  .risk-medium { background:rgba(245,158,11,.2); color:#f59e0b; border:1px solid rgba(245,158,11,.4); }
+  .risk-low { background:rgba(234,179,8,.15); color:#eab308; border:1px solid rgba(234,179,8,.3); }
+  .risk-safe { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+  .order-row { display:flex; justify-content:space-between; font-size:12px; color:#bbb; padding:2px 0; }
+  .order-row b { color:#fff; }
+  .order-utr { font-family:monospace; background:rgba(235,0,40,.1); padding:2px 6px; border-radius:4px; font-size:11px; color:#eb0028; }
+  .screenshot-box { margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.08); background:#050505; }
+  .screenshot-box img { width:100%; display:block; max-height:400px; object-fit:contain; }
+  .screenshot-label { font-size:10px; color:#888; padding:6px 10px; background:rgba(255,255,255,.03); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .risk-reason { font-size:11px; color:#f59e0b; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); padding:8px 10px; border-radius:8px; margin-top:8px; line-height:1.5; }
+  .risk-reason.high { color:#ef4444; background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.25); }
+  .actions { display:flex; gap:8px; margin-top:12px; }
+  .btn-approve, .btn-reject { flex:1; padding:11px; border:none; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; }
+  .btn-approve { background:#22c55e; color:#fff; }
+  .btn-reject { background:rgba(239,68,68,.15); color:#ef4444; border:1px solid rgba(239,68,68,.3); }
+  .key-box { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:10px 12px; margin-top:10px; }
+  .key-box .label { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .key-box .key { font-family:monospace; font-size:13px; font-weight:800; color:#22c55e; word-break:break-all; margin-top:4px; }
+  .add-form { display:grid; gap:12px; }
+  .add-form select, .add-form textarea { width:100%; padding:11px 13px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:#fff; font-size:13px; font-family:inherit; outline:none; }
+  .add-form textarea { min-height:100px; resize:vertical; font-family:monospace; }
+  .add-form button { padding:14px; background:#eb0028; color:#fff; border:none; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
+  .add-form label { font-size:11px; color:#aaa; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+  .stock-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .stock-item { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:11px 8px; text-align:center; cursor:pointer; }
+  .stock-item .n { font-size:20px; font-weight:900; }
+  .stock-item .n.ok { color:#22c55e; } .stock-item .n.low { color:#f59e0b; } .stock-item .n.zero { color:#ef4444; }
+  .stock-item .app { font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-top:2px; }
+  .stock-item .plan { font-size:11px; font-weight:800; margin-top:2px; }
+  .empty { text-align:center; color:#666; padding:18px; font-size:13px; }
+  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(34,197,94,.95); color:#fff; padding:11px 20px; border-radius:10px; font-weight:700; font-size:12px; z-index:999; display:none; max-width:90vw; text-align:center; }
   .toast.error { background:rgba(239,68,68,.95); }
   .toast.show { display:block; }
-  .wait-screen { position:fixed; inset:0; z-index:250; background:rgba(0,0,0,.95); backdrop-filter:blur(20px); display:none; align-items:center; justify-content:center; padding:20px; }
-  .wait-screen.show { display:flex; }
-  .wait-box { background:#0d0d0d; border:1px solid var(--border); border-radius:22px; max-width:380px; width:100%; padding:36px 28px; text-align:center; }
-  .wait-icon { width:80px; height:80px; margin:0 auto 20px; border-radius:50%; background:linear-gradient(135deg,rgba(235,0,40,.15),rgba(168,85,247,.1)); border:2px solid rgba(235,0,40,.3); display:flex; align-items:center; justify-content:center; font-size:36px; animation:waitPulse 2s ease-in-out infinite; }
-  @keyframes waitPulse { 0%,100%{transform:scale(1); box-shadow:0 0 0 0 rgba(235,0,40,.4);} 50%{transform:scale(1.05); box-shadow:0 0 0 20px rgba(235,0,40,0);} }
-  .wait-box h3 { font-size:22px; font-weight:900; margin-bottom:10px; }
-  .wait-box p { font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:20px; }
-  .wait-order-id { font-family:monospace; font-size:14px; font-weight:800; color:var(--red); padding:10px 16px; background:rgba(235,0,40,.1); border:1px solid rgba(235,0,40,.3); border-radius:10px; display:inline-block; margin-bottom:20px; }
-  .wait-steps { text-align:left; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:20px; }
-  .wait-step { display:flex; align-items:center; gap:10px; padding:6px 0; font-size:12px; color:#aaa; }
-  .wait-step .dot { width:8px; height:8px; border-radius:50%; background:#555; flex-shrink:0; }
-  .wait-step.active .dot { background:#22c55e; box-shadow:0 0 10px #22c55e; animation:pulse 1.5s infinite; }
-  .wait-step.active { color:#fff; font-weight:600; }
-  .wait-btn { display:inline-block; padding:12px 24px; background:rgba(255,255,255,.05); color:#fff; text-decoration:none; border-radius:10px; font-weight:800; font-size:12px; border:1px solid var(--border); transition:all .3s; }
-  .wait-btn:hover { background:rgba(255,255,255,.1); }
-  .theme-badge { position:fixed; bottom:70px; right:16px; background:rgba(0,0,0,.85); backdrop-filter:blur(12px); border:1px solid var(--border); border-radius:20px; padding:6px 12px; font-size:10px; font-weight:700; color:#aaa; z-index:90; display:flex; align-items:center; gap:6px; }
-  .theme-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--theme-primary,#eb0028); box-shadow:0 0 8px var(--theme-primary,#eb0028); }
-  footer { max-width:1100px; margin:0 auto; padding:40px 20px 110px; text-align:center; }
-  .foot-brand { font-size:22px; font-weight:900; margin-bottom:10px; }
-  .foot-brand .red { color:var(--red); }
-  footer p { color:var(--muted); font-size:11px; line-height:1.8; }
-  footer a { color:var(--red); text-decoration:none; font-weight:700; }
-  @media (max-width:640px) {
-    .nav-actions .live-badge { display:none; }
-    .section { padding:40px 16px 90px; }
-    nav { padding:10px 16px; }
-    .nav-btn { padding:7px 12px; font-size:10px; }
-    .app { padding:14px 8px; }
-    .app-img { width:50px; height:50px; font-size:24px; }
-    .app-name { font-size:10px; }
-    .modal-head, .modal-body { padding:16px 18px; }
-    .qr-img { width:130px; height:130px; }
-  }
-  .reveal { opacity:0; transform:translateY(30px); transition:all .8s; }
-  .reveal.visible { opacity:1; transform:translateY(0); }
+  .modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.9); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:16px; max-width:420px; width:100%; max-height:80vh; overflow-y:auto; padding:20px; }
+  .modal h3 { font-size:15px; font-weight:900; margin-bottom:14px; }
+  .keyline { font-family:monospace; font-size:12px; padding:8px 10px; background:rgba(255,255,255,.03); border-radius:8px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .keyline .k { word-break:break-all; flex:1; }
+  .keyline .s { font-size:10px; padding:2px 8px; border-radius:8px; }
+  .keyline .s.used { background:rgba(239,68,68,.15); color:#ef4444; }
+  .keyline .s.free { background:rgba(34,197,94,.15); color:#22c55e; }
+  .keyline .del { background:rgba(239,68,68,.15); color:#ef4444; border:none; padding:4px 8px; border-radius:6px; font-size:10px; cursor:pointer; font-family:inherit; font-weight:700; }
+  .modal .close { margin-top:12px; width:100%; padding:11px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:9px; color:#fff; font-weight:700; cursor:pointer; font-family:inherit; }
+  .big-warn { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:11px; color:#fca5a5; font-weight:700; }
+  @media (min-width:600px) { .stats { grid-template-columns:repeat(4,1fr); } .stock-grid { grid-template-columns:repeat(5,1fr); } }
 </style>
 </head>
-<body class="theme-1">
+<body>
+<div class="wrap">
 
-<div class="bg-orbs">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-</div>
-<div class="grid-bg"></div>
-<canvas id="threeCanvas"></canvas>
-
-<div class="content">
-
-<nav>
-  <div class="nav-inner">
-    <div class="logo">
-      <div class="logo-mark">1+</div>
-      <div class="logo-text">ONE<span class="red">PLUS</span></div>
-    </div>
-    <div class="nav-actions">
-      <div class="live-badge"><span class="live-dot"></span><span id="navOnline">0</span> online</div>
-      <a class="nav-btn" href="https://t.me/OneplusOnlineKey_bot" target="_blank">OPEN BOT →</a>
-    </div>
-  </div>
-</nav>
-
-<section class="hero">
-  <div class="hero-logo-wrap">
-    <img src="/static/app_oneplus.png" alt="OnePlus" onerror="this.src='/static/logo.png'">
-  </div>
-  <h1>Premium Keys. <span class="red">Never Settle.</span></h1>
-  <p>India's fastest premium key store. 3 apps available. Instant delivery via UPI.</p>
-  <div class="trust-badges">
-    <span class="tb">⚡ Instant Delivery</span>
-    <span class="tb">🔒 Secure UPI</span>
-    <span class="tb">💬 24×7 Support</span>
-    <span class="tb">✓ 10K+ Trusted</span>
-  </div>
-  <div class="hero-cta">
-    <a class="btn-red" href="#shop">🛒 START SHOPPING</a>
-    <a class="btn-outline" href="https://t.me/BT_TIGER23" target="_blank">💬 SUPPORT</a>
-  </div>
-</section>
-
-<section class="section" id="shop">
-  <div class="section-head reveal">
-    <div class="eyebrow">STEP 1 — CHOOSE APP</div>
-    <h2>Select Your <span class="red">App</span></h2>
-    <p>Pehle app choose karo, phir plan select karo</p>
-  </div>
-
-  <div class="apps reveal" id="appSelector">
-    {% for k, a in apps.items() %}
-    <div class="app" data-app="{{ k }}" style="color:{{ a.color }};" onclick="selectApp('{{ k }}','{{ a.name }}','{{ a.color }}')">
-      <div class="app-check">✓</div>
-      <div class="app-img">
-        <img src="/static/{{ a.img }}" alt="{{ a.name }}" onerror="this.style.display='none';this.parentElement.textContent='{{ a.icon }}'">
-      </div>
-      <div class="app-name">{{ a.name }}</div>
-    </div>
-    {% endfor %}
-  </div>
-
-  <div class="section-head reveal" style="margin-top:40px;">
-    <div class="eyebrow">STEP 2 — CHOOSE PLAN</div>
-    <h2>Pick Your <span class="red">Duration</span></h2>
-    <p id="selectedAppLabel">⬆️ Upar se app select karo, phir plans dikhenge</p>
-  </div>
-
-  <div class="plans" id="planGrid" style="display:none;">
-    {% for k, p in plans.items() %}
-    <div class="plan {% if p.tag %}hot{% endif %}">
-      {% if p.tag %}<div class="plan-tag">{{ p.tag }}</div>{% endif %}
-      <div class="plan-tier">TIER {{ loop.index }}</div>
-      <div class="plan-icon">{{ p.emoji }}</div>
-      <div class="plan-name">{{ p.name }}</div>
-      <div class="plan-sub">Access {{ p.days }}{% if p.days is number %} din{% endif %} ke liye</div>
-      <div class="plan-price">
-        <span class="curr">₹</span>
-        <span class="amt">{{ p.price }}</span>
-        <span class="per">/ {{ p.days }}{% if p.days is number %}d{% endif %}</span>
-      </div>
-      <div class="plan-old">₹{{ p.old_price }}</div>
-      <ul class="plan-features">
-        <li><span class="check">✓</span> Full premium access</li>
-        <li><span class="check">✓</span> {{ p.days }}{% if p.days is number %} din{% endif %} validity</li>
-        <li><span class="check">✓</span> Instant key delivery</li>
-        <li><span class="check">✓</span> 24×7 support</li>
-      </ul>
-      <button class="plan-btn" onclick="openOrder('{{ k }}','{{ p.name }}',{{ p.price }},'{{ p.days }}')">
-        <span>BUY NOW</span><span>→</span>
-      </button>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-
-<footer>
-  <div class="foot-brand">ONE<span class="red">PLUS</span></div>
-  <p>💬 Support: <a href="https://t.me/BT_TIGER23" target="_blank">@BT_TIGER23</a><br>
-    <span style="color:#444;font-size:10px;">© 2026 {{ brand }}. Never Settle.</span></p>
-</footer>
-
+<div class="head">
+  <h1>👑 ONE<span class="red">PLUS</span> Admin</h1>
+  <a class="logout" href="/admin/logout">LOGOUT</a>
 </div>
 
-<div class="live-stats">
-  <div class="live-stats-inner">
-    <div class="stat online"><div class="stat-icon">🟢</div><span><b id="onlineCount">0</b> online</span></div>
-    <div class="stat"><div class="stat-icon">👥</div><span><b id="totalUsers">0</b> users</span></div>
-    <div class="stat"><div class="stat-icon">⚡</div><span><b id="todaySales">0</b> today</span></div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('orders',this)">⏳ Orders <span style="opacity:.7;">({{ pending|length }})</span></div>
+  <div class="tab" onclick="switchTab('keys',this)">➕ Add Keys</div>
+  <div class="tab" onclick="switchTab('stock',this)">📦 Stock</div>
+  <div class="tab" onclick="switchTab('history',this)">📜 History</div>
+</div>
+
+<div class="panel active" id="panel-orders">
+  <div class="stats">
+    <div class="stat"><div class="num">{{ pending|length }}</div><div class="lbl">Pending</div></div>
+    <div class="stat"><div class="num">{{ total_sales }}</div><div class="lbl">Sales</div></div>
+    <div class="stat"><div class="num">₹{{ revenue }}</div><div class="lbl">Revenue</div></div>
+    <div class="stat"><div class="num">{{ approved|length }}</div><div class="lbl">Recent</div></div>
+  </div>
+
+  <div class="section">
+    <h2>⏳ Pending Orders <span class="count">{{ pending|length }}</span></h2>
+    {% if pending %}
+      {% for o in pending %}
+      {% set score = o[8] or 0 %}
+      {% set rlabel = 'HIGH' if score >= 70 else ('MEDIUM' if score >= 40 else ('LOW' if score >= 20 else 'SAFE')) %}
+      <div class="order {% if score >= 70 %}high-risk{% elif score >= 40 %}medium-risk{% endif %}" id="order-{{ o[0] }}">
+        <div class="order-top">
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span class="order-id">Order #{{ o[0] }}</span>
+            <span class="risk-badge risk-{{ rlabel|lower }}">{{ rlabel }} {{ score }}%</span>
+          </div>
+          <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }} · ₹{{ o[3] }}</span>
+        </div>
+        <div class="order-row"><span>👤 Name</span><b>{{ o[4] }}</b></div>
+        <div class="order-row"><span>💬 Contact</span><b>{{ o[5] }}</b></div>
+        <div class="order-row"><span>🧾 UTR</span><span class="order-utr">{{ o[6] }}</span></div>
+
+        {% if o[7] %}
+        <div class="screenshot-box">
+          <div class="screenshot-label">📸 Payment Screenshot</div>
+          <img src="/static/uploads/{{ o[7] }}" alt="Payment" loading="lazy">
+        </div>
+        {% else %}
+        <div class="big-warn">⚠️ Screenshot missing</div>
+        {% endif %}
+
+        {% if o[9] %}
+        <div class="risk-reason {% if score >= 70 %}high{% endif %}">⚠️ <b>Risk:</b> {{ o[9] }}</div>
+        {% endif %}
+
+        <div class="actions">
+          <button class="btn-approve" onclick="approveOrder({{ o[0] }})">✅ APPROVE</button>
+          <button class="btn-reject" onclick="rejectOrder({{ o[0] }})">❌ REJECT</button>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}<div class="empty">✅ Koi pending order nahi</div>{% endif %}
   </div>
 </div>
 
-<div class="modal-overlay" id="orderModal">
-  <div class="modal" id="modalBox">
-    <div class="modal-head">
-      <h3 id="modalTitle">Complete Order</h3>
-      <div class="close" onclick="closeOrder()">✕</div>
-    </div>
-    <div class="modal-body">
-      <div class="order-summary">
-        <div>
-          <div class="lbl">App · Plan</div>
-          <div class="val" id="mAppPlan">—</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="lbl">Amount</div>
-          <div class="val rp" id="mAmount">₹0</div>
-        </div>
+<div class="panel" id="panel-keys">
+  <div class="section">
+    <h2>➕ Add Keys</h2>
+    <div class="add-form">
+      <div><label>App</label>
+        <select id="addApp">{% for k,v in apps.items() %}<option value="{{ k }}">{{ v.name }}</option>{% endfor %}</select>
       </div>
-      <div class="qr-section">
-        <img class="qr-img" src="/static/qr.png" alt="QR" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22%3E%3Crect width=%22140%22 height=%22140%22 fill=%22%23fff%22/%3E%3Ctext x=%2270%22 y=%2280%22 font-size=%2236%22 text-anchor=%22middle%22%3E📱%3C/text%3E%3C/svg%3E'">
-        <div class="upi-id">{{ upi }}</div>
-        <div class="upi-name">{{ upi_name }}</div>
+      <div><label>Plan</label>
+        <select id="addPlan">{% for k,v in plans.items() %}<option value="{{ k }}">{{ v.name }} — ₹{{ v.price }}</option>{% endfor %}</select>
       </div>
-      <div class="security-note">
-        <b>🔒 Secure:</b> Payment ke baad <b>screenshot + UTR</b> dono bhejo. Admin verify karega, tab hi key milegi. <b>Fake UTR = order cancel.</b>
+      <div><label>Keys (ek line me ek)</label>
+        <textarea id="addKeysText" placeholder="KEY-001&#10;KEY-002&#10;KEY-003"></textarea>
       </div>
-      <form id="orderForm" onsubmit="submitOrder(event)">
-        <div class="form-group">
-          <label>Your Name</label>
-          <input type="text" id="fName" placeholder="e.g. Rahul Sharma" required minlength="2">
-        </div>
-        <div class="form-group">
-          <label>Telegram / WhatsApp Username</label>
-          <input type="text" id="fContact" placeholder="@username or phone" required minlength="3">
-        </div>
-        <div class="form-group">
-          <label>UTR / Transaction ID</label>
-          <input type="text" id="fUtr" placeholder="UPI app se 12-digit UTR" required minlength="10" maxlength="30">
-          <div class="hint">⚠️ Fake UTR dalne par order cancel</div>
-        </div>
-        <div class="form-group">
-          <label>📸 Payment Screenshot</label>
-          <input type="file" id="fScreenshot" accept="image/*" required>
-          <div class="hint">Payment ka screenshot upload karo (max 5MB)</div>
-        </div>
-        <button type="submit" class="submit-btn" id="submitBtn">✓ CONFIRM ORDER</button>
-      </form>
+      <button onclick="addKeys()">+ ADD KEYS</button>
     </div>
   </div>
 </div>
 
-<div class="wait-screen" id="waitScreen">
-  <div class="wait-box">
-    <div class="wait-icon">⏳</div>
-    <h3>Order Placed!</h3>
-    <p>Admin tumhara payment verify kar raha hai. <b>5-10 minute</b> me key mil jayegi.</p>
-    <div class="wait-order-id" id="waitOrderId">Order #0</div>
-    <div class="wait-steps">
-      <div class="wait-step active"><div class="dot"></div> <span>Order submit ho gaya</span></div>
-      <div class="wait-step active"><div class="dot"></div> <span>Admin verification</span></div>
-      <div class="wait-step"><div class="dot"></div> <span>Key approval</span></div>
-      <div class="wait-step"><div class="dot"></div> <span>Delivery</span></div>
+<div class="panel" id="panel-stock">
+  <div class="section">
+    <h2>📦 Stock Overview</h2>
+    <p style="font-size:11px;color:#888;margin-bottom:12px;">Box pe tap karo — keys dekho / delete karo</p>
+    <div class="stock-grid">
+      {% for app_k, app_v in apps.items() %}
+        {% for plan_k, plan_v in plans.items() %}
+          {% set cnt = stock.get(app_k ~ '|' ~ plan_k, 0) %}
+          <div class="stock-item" onclick="viewStock('{{ app_k }}','{{ plan_k }}','{{ app_v.name }} · {{ plan_v.name }}')">
+            <div class="n {% if cnt == 0 %}zero{% elif cnt < 5 %}low{% else %}ok{% endif %}">{{ cnt }}</div>
+            <div class="app">{{ app_v.name }}</div>
+            <div class="plan">{{ plan_v.name }}</div>
+          </div>
+        {% endfor %}
+      {% endfor %}
     </div>
-    <div id="keyBox" style="display:none; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3); border-radius:12px; padding:14px; margin-bottom:16px;">
-      <div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; font-weight:700;">🔑 Tumhari Key</div>
-      <div id="keyText" style="font-family:monospace; font-size:16px; font-weight:900; color:#22c55e; margin-top:6px; word-break:break-all; text-align:center;"></div>
-    </div>
-    <button class="wait-btn" onclick="checkOrderStatus()" style="cursor:pointer;">🔄 Check Status</button>
-    <br><br>
-    <a class="wait-btn" href="https://t.me/BT_TIGER23" target="_blank">💬 Support</a>
   </div>
 </div>
 
-<div class="theme-badge" id="themeBadge">
-  <span class="dot"></span>
-  <span class="name">OnePlus Red</span>
+<div class="panel" id="panel-history">
+  <div class="section">
+    <h2>✅ Recently Approved</h2>
+    {% if approved %}
+      {% for o in approved %}
+      <div class="order">
+        <div class="order-top">
+          <span class="order-id">Order #{{ o[0] }}</span>
+          <span class="order-app">{{ apps[o[1]].name }} · {{ plans[o[2]].name }}</span>
+        </div>
+        <div class="order-row"><span>👤 {{ o[3] }}</span><b>{{ o[4] }}</b></div>
+        {% if o[5] %}<div class="key-box"><div class="label">Key Delivered</div><div class="key">{{ o[5] }}</div></div>{% endif %}
+      </div>
+      {% endfor %}
+    {% else %}<div class="empty">Koi order nahi</div>{% endif %}
+  </div>
+</div>
+
+</div>
+
+<div class="modal-overlay" id="stockModal" onclick="if(event.target.id==='stockModal')this.classList.remove('show')">
+  <div class="modal">
+    <h3 id="stockTitle">Stock</h3>
+    <div id="stockList"></div>
+    <button class="close" onclick="document.getElementById('stockModal').classList.remove('show')">CLOSE</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const canvas = document.getElementById('threeCanvas');
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, .1, 1000);
-const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-camera.position.z = 6;
-const pGeo = new THREE.BufferGeometry();
-const pCount = 500;
-const pos = new Float32Array(pCount*3);
-const col = new Float32Array(pCount*3);
-for (let i = 0; i < pCount; i++) {
-  pos[i*3]=(Math.random()-.5)*30; pos[i*3+1]=(Math.random()-.5)*30; pos[i*3+2]=(Math.random()-.5)*30;
-  const r = Math.random();
-  if (r<.33) { col[i*3]=.92; col[i*3+1]=0; col[i*3+2]=.15; }
-  else if (r<.66) { col[i*3]=.13; col[i*3+1]=.77; col[i*3+2]=.36; }
-  else { col[i*3]=1; col[i*3+1]=1; col[i*3+2]=1; }
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
 }
-pGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-pGeo.setAttribute('color', new THREE.BufferAttribute(col,3));
-const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size:.05, vertexColors:true, transparent:true, opacity:.7, blending:THREE.AdditiveBlending }));
-scene.add(particles);
-function updateParticleColors(hexColor) {
-  const r = parseInt(hexColor.slice(1,3), 16) / 255;
-  const g = parseInt(hexColor.slice(3,5), 16) / 255;
-  const b = parseInt(hexColor.slice(5,7), 16) / 255;
-  const colors = particles.geometry.attributes.color.array;
-  for (let i = 0; i < colors.length; i += 3) {
-    const rand = Math.random();
-    if (rand < 0.33) { colors[i]=r; colors[i+1]=g; colors[i+2]=b; }
-    else if (rand < 0.66) { colors[i]=1; colors[i+1]=1; colors[i+2]=1; }
-    else { colors[i]=0.4; colors[i+1]=0.4; colors[i+2]=0.4; }
-  }
-  particles.geometry.attributes.color.needsUpdate = true;
-}
-let mx=0, my=0;
-document.addEventListener('mousemove', e => { mx = (e.clientX/innerWidth)*2-1; my = -(e.clientY/innerHeight)*2+1; });
-let t=0;
-(function loop(){ requestAnimationFrame(loop); t+=.004; particles.rotation.y = t*.3; particles.rotation.x = Math.sin(t*.2)*.1; camera.position.x += (mx*.4 - camera.position.x)*.05; camera.position.y += (my*.4 - camera.position.y)*.05; camera.lookAt(scene.position); renderer.render(scene, camera); })();
-addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-function updateCounters(){
-  const h = new Date().getHours();
-  const base = (h>=18&&h<=23)?180:(h>=12)?120:80;
-  const online = Math.max(50, base + Math.floor(Math.random()*40) - 20);
-  const users = 10420 + Math.floor(Date.now()/60000)%200;
-  const sales = 340 + Math.floor(Date.now()/120000)%60;
-  document.getElementById('onlineCount').textContent = online;
-  document.getElementById('navOnline').textContent = online;
-  document.getElementById('totalUsers').textContent = users.toLocaleString();
-  document.getElementById('todaySales').textContent = sales;
-}
-updateCounters();
-setInterval(updateCounters, 5000);
-const THEMES = ['theme-1','theme-2','theme-3','theme-4','theme-5'];
-const THEME_NAMES = ['OnePlus Red','Purple Neon','Green Cyber','Sunset Gold','Blue Ocean'];
-const THEME_COLORS = ['#eb0028','#a855f7','#22c55e','#f59e0b','#3b82f6'];
-let currentThemeIdx = 0;
-function applyTheme(idx){
-  document.body.classList.remove(...THEMES);
-  document.body.classList.add(THEMES[idx]);
-  const badge = document.getElementById('themeBadge');
-  if (badge){
-    badge.querySelector('.dot').style.background = THEME_COLORS[idx];
-    badge.querySelector('.dot').style.boxShadow = `0 0 8px ${THEME_COLORS[idx]}`;
-    badge.querySelector('.name').textContent = THEME_NAMES[idx];
-  }
-  updateParticleColors(THEME_COLORS[idx]);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = THEME_COLORS[idx];
-}
-function rotateTheme(){
-  currentThemeIdx = (currentThemeIdx + 1) % THEMES.length;
-  applyTheme(currentThemeIdx);
-  showToast(`🎨 ${THEME_NAMES[currentThemeIdx]}`);
-}
-applyTheme(0);
-setInterval(rotateTheme, 5 * 60 * 1000);
-document.addEventListener('keydown', e => { if (e.key === 't' || e.key === 'T') rotateTheme(); });
-let selectedApp = null;
-function selectApp(key, name, color){
-  selectedApp = { key, name, color };
-  const grid = document.getElementById('planGrid');
-  grid.style.display = 'grid';
-  grid.classList.add('visible');
-  document.querySelectorAll('.app').forEach(a => {
-    a.classList.remove('active');
-    if (a.dataset.app === key) a.classList.add('active');
-  });
-  document.querySelectorAll('.plan').forEach(p => p.style.setProperty('--app-color', color));
-  document.getElementById('selectedAppLabel').innerHTML = '<span style="color:' + color + ';font-weight:800;">' + name + '</span> selected — ab plan choose karo';
-  setTimeout(() => grid.scrollIntoView({behavior:'smooth', block:'start'}), 200);
-}
-let currentPlan = null;
-let currentOrderId = null;
-function openOrder(planKey, planName, price, days){
-  if (!selectedApp){
-    showToast('⚠️ Pehle upar se app select karo!', true);
-    document.getElementById('appSelector').scrollIntoView({behavior:'smooth'});
-    return;
-  }
-  currentPlan = { key: planKey, name: planName, price, days };
-  document.getElementById('modalTitle').textContent = selectedApp.name + ' — ' + planName;
-  document.getElementById('mAppPlan').textContent = selectedApp.name + ' · ' + planName + ' · ' + days;
-  document.getElementById('mAmount').textContent = '₹' + price;
-  document.getElementById('modalBox').style.setProperty('--modal-color', selectedApp.color);
-  document.getElementById('orderModal').classList.add('show');
-  document.body.style.overflow = 'hidden';
-}
-function closeOrder(){
-  document.getElementById('orderModal').classList.remove('show');
-  document.body.style.overflow = '';
-  document.getElementById('orderForm').reset();
-}
-document.getElementById('orderModal').addEventListener('click', e => {
-  if (e.target.id === 'orderModal') closeOrder();
-});
-async function submitOrder(e){
-  e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = '⏳ PROCESSING...';
-  const utr = document.getElementById('fUtr').value.trim();
-  const fileInput = document.getElementById('fScreenshot');
-  const file = fileInput.files[0];
-  if (utr.length < 10){
-    showToast('❌ UTR min 10 characters', true);
-    btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER';
-    return;
-  }
-  if (!file){
-    showToast('❌ Payment screenshot upload karo', true);
-    btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER';
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024){
-    showToast('❌ Image 5MB se badi', true);
-    btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER';
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    const screenshot_b64 = ev.target.result;
-    const payload = {
-      app: selectedApp.key, plan: currentPlan.key,
-      name: document.getElementById('fName').value.trim(),
-      contact: document.getElementById('fContact').value.trim(),
-      utr: utr,
-      screenshot: screenshot_b64
-    };
-    try {
-      const res = await fetch('/api/order', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.ok){
-        currentOrderId = data.order_id;
-        closeOrder();
-        document.getElementById('waitOrderId').textContent = 'Order #' + data.order_id;
-        document.getElementById('waitScreen').classList.add('show');
-        document.body.style.overflow = 'hidden';
-        setTimeout(checkOrderStatus, 3000);
-      } else {
-        showToast('❌ ' + (data.error || 'Failed'), true);
-      }
-    } catch (err){
-      showToast('❌ Network error', true);
-    } finally {
-      btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-function checkOrderStatus(){
-  if (!currentOrderId) return;
-  fetch('/api/order-status/' + currentOrderId)
-    .then(r => r.json())
-    .then(d => {
-      if (!d.ok) return;
-      if (d.status === 'approved' && d.key){
-        document.getElementById('keyBox').style.display = 'block';
-        document.getElementById('keyText').textContent = d.key;
-        document.querySelectorAll('.wait-step').forEach(el => el.classList.add('active'));
-        showToast('🎉 Key mil gayi!');
-      } else if (d.status === 'rejected'){
-        showToast('❌ Order reject ho gaya', true);
-      }
-    });
-}
-setInterval(() => {
-  if (document.getElementById('waitScreen').classList.contains('show') && currentOrderId){
-    checkOrderStatus();
-  }
-}, 5000);
-function showToast(msg, isError){
+function showToast(msg, err){
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => { t.className = 'toast'; }, 3500);
+  t.className = 'toast show' + (err ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 3000);
 }
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold:.1 });
-document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-document.querySelectorAll('a[href^="#"]').forEach(l => {
-  l.addEventListener('click', e => {
-    e.preventDefault();
-    const t = document.querySelector(l.getAttribute('href'));
-    if (t) t.scrollIntoView({behavior:'smooth', block:'start'});
+async function addKeys(){
+  const app = document.getElementById('addApp').value;
+  const plan = document.getElementById('addPlan').value;
+  const keys = document.getElementById('addKeysText').value;
+  if (!keys.trim()){ showToast('❌ Keys daalo', true); return; }
+  const res = await fetch('/admin/addkeys', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({app, plan, keys})
   });
-});
+  const d = await res.json();
+  if (d.ok){
+    showToast(`✅ ${d.added} keys add${d.duplicate ? ', ' + d.duplicate + ' dup' : ''}`);
+    document.getElementById('addKeysText').value = '';
+    setTimeout(() => location.reload(), 1200);
+  } else { showToast('❌ ' + d.error, true); }
+}
+async function approveOrder(oid){
+  const res = await fetch('/admin/approve/' + oid, {method:'POST'});
+  const d = await res.json();
+  if (d.ok){
+    showToast(`✅ Key: ${d.key}`);
+    const el = document.getElementById('order-' + oid);
+    if (el) el.innerHTML = `<div class="key-box"><div class="label">Key Delivered</div><div class="key">${d.key}</div></div>`;
+    setTimeout(() => location.reload(), 2000);
+  } else { showToast('❌ ' + d.error, true); }
+}
+async function rejectOrder(oid){
+  if (!confirm('Reject?')) return;
+  await fetch('/admin/reject/' + oid, {method:'POST'});
+  showToast('✅ Rejected');
+  setTimeout(() => location.reload(), 1000);
+}
+async function viewStock(app, plan, title){
+  const res = await fetch('/admin/stock-list/' + app + '/' + plan);
+  const d = await res.json();
+  document.getElementById('stockTitle').textContent = title + ' (' + d.keys.length + ')';
+  const el = document.getElementById('stockList');
+  if (!d.keys.length){
+    el.innerHTML = '<div class="empty">Koi key nahi</div>';
+  } else {
+    el.innerHTML = d.keys.map(k => 
+      `<div class="keyline">
+        <span class="k">${k.key}</span>
+        <span class="s ${k.used ? 'used' : 'free'}">${k.used ? 'USED' : 'FREE'}</span>
+        <button class="del" onclick="deleteKey(${k.id})">🗑️</button>
+      </div>`
+    ).join('');
+  }
+  document.getElementById('stockModal').classList.add('show');
+}
+async function deleteKey(kid){
+  if (!confirm('Delete this key?')) return;
+  const res = await fetch('/admin/delete-key/' + kid, {method:'POST'});
+  const d = await res.json();
+  if (d.ok){ showToast('✅ Key deleted'); setTimeout(() => location.reload(), 800); }
+  else { showToast('❌ Failed', true); }
+}
 </script>
 </body>
 </html>
