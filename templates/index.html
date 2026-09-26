@@ -9,22 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; -webkit-tap-highlight-color:transparent; }
-  :root { --bg:#000; --card:rgba(11,11,11,.8); --border:rgba(255,255,255,.18); --red:#eb0028; --text:#fff; --muted:#ccc; }
+  :root { --bg:#000; --card:rgba(11,11,11,.85); --border:rgba(255,255,255,.18); --red:#eb0028; --text:#fff; --muted:#ccc; }
   html { scroll-behavior:smooth; }
   body { background:#000; color:var(--text); min-height:100vh; overflow-x:hidden; }
 
-  #bgVideo {
-    position: fixed; top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    z-index: -2;
-  }
-  .video-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.55);
-    z-index: -1;
-    pointer-events: none;
-  }
+  #bgVideo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+  .video-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: -1; pointer-events: none; }
   .content { position:relative; z-index:2; }
 
   body.theme-1 { --red:#eb0028; }
@@ -55,9 +45,9 @@
   .trust-badges { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
   .tb { padding:5px 12px; background:rgba(0,0,0,.55); border:1px solid var(--border); border-radius:20px; font-size:11px; color:#fff; font-weight:600; backdrop-filter:blur(10px); }
   .hero-cta { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .btn-red { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:var(--red); color:#fff; text-decoration:none; border-radius:10px; font-weight:800; font-size:13px; box-shadow:0 0 30px var(--red); transition:transform .3s; }
+  .btn-red { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:var(--red); color:#fff; text-decoration:none; border-radius:10px; font-weight:800; font-size:13px; box-shadow:0 0 30px var(--red); transition:transform .3s; cursor:pointer; }
   .btn-red:hover { transform:translateY(-3px); }
-  .btn-outline { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:rgba(0,0,0,.55); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:all .3s; backdrop-filter:blur(10px); }
+  .btn-outline { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; background:rgba(0,0,0,.55); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:13px; border:1px solid var(--border); transition:all .3s; backdrop-filter:blur(10px); cursor:pointer; }
   .btn-outline:hover { border-color:#fff; transform:translateY(-3px); }
 
   .section { max-width:1100px; margin:0 auto; padding:40px 20px 60px; }
@@ -67,18 +57,18 @@
   .section-head h2 .red { color:var(--red); }
   .section-head p { color:#ddd; font-size:13px; text-shadow:0 2px 10px rgba(0,0,0,.9); }
 
-  .apps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:30px; }.apps { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:30px; }
-  .app { position:relative; padding:18px 10px; background:var(--card); backdrop-filter:blur(15px); border:1px solid var(--border); border-radius:18px; text-align:center; cursor:pointer; transition:all .3s; overflow:hidden; }
+  .apps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:30px; }
+  .app { position:relative; padding:16px 8px; background:var(--card); backdrop-filter:blur(15px); border:1px solid var(--border); border-radius:16px; text-align:center; cursor:pointer; transition:all .3s; overflow:hidden; }
   .app:hover { transform:translateY(-4px); border-color:rgba(255,255,255,.35); }
   .app.active { border-color:currentColor; box-shadow:0 0 35px -8px currentColor; }
-  .app.active::before { content:''; position:absolute; inset:0; border-radius:18px; background:radial-gradient(circle at center,currentColor 0%,transparent 70%); opacity:.2; pointer-events:none; }
-  .app-img { width:60px; height:60px; margin:0 auto 10px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:900; background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05)); border:1px solid rgba(255,255,255,.2); overflow:hidden; transition:transform .4s; }
+  .app.active::before { content:''; position:absolute; inset:0; border-radius:16px; background:radial-gradient(circle at center,currentColor 0%,transparent 70%); opacity:.2; pointer-events:none; }
+  .app-img { width:52px; height:52px; margin:0 auto 8px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:900; background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05)); border:1px solid rgba(255,255,255,.2); overflow:hidden; transition:transform .4s; }
   .app:hover .app-img { transform:scale(1.1); }
   .app.active .app-img { transform:scale(1.08); }
   .app-img img { width:100%; height:100%; object-fit:cover; }
-  .app-name { font-size:11px; font-weight:800; letter-spacing:.3px; color:#eee; text-transform:uppercase; line-height:1.3; text-shadow:0 2px 8px rgba(0,0,0,.9); }
+  .app-name { font-size:10px; font-weight:800; letter-spacing:.3px; color:#eee; text-transform:uppercase; line-height:1.3; text-shadow:0 2px 8px rgba(0,0,0,.9); }
   .app.active .app-name { color:#fff; }
-  .app-check { position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:currentColor; display:none; align-items:center; justify-content:center; font-size:11px; color:#000; font-weight:900; }
+  .app-check { position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:currentColor; display:none; align-items:center; justify-content:center; font-size:10px; color:#000; font-weight:900; }
   .app.active .app-check { display:flex; }
 
   .plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
@@ -104,18 +94,47 @@
   .plan.hot .plan-btn { background:var(--app-color,#eb0028); border-color:var(--app-color,#eb0028); box-shadow:0 0 25px var(--app-color,#eb0028); }
   .plan-btn:hover { background:var(--app-color,#eb0028); border-color:var(--app-color,#eb0028); transform:translateY(-2px); }
 
-  .reward-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; max-width:900px; margin:0 auto; }
-  .reward-box { border-radius:18px; padding:24px; text-align:center; backdrop-filter:blur(15px); }
-  .reward-box.gold { background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(235,0,40,.15)); border:1px solid rgba(245,158,11,.4); }
-  .reward-box.green { background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.35); }
-  .reward-box .ico { font-size:48px; margin-bottom:12px; }
-  .reward-box .ttl { font-size:20px; font-weight:900; margin-bottom:8px; }
-  .reward-box.gold .ttl { color:#fbbf24; }
-  .reward-box.green .ttl { color:#22c55e; }
-  .reward-box .desc { font-size:13px; line-height:1.7; }
-  .reward-box.gold .desc { color:#fcd34d; }
-  .reward-box.green .desc { color:#a4d9b5; }
-  .reward-box .small { margin-top:14px; font-size:11px; opacity:.75; }
+  /* ============ LIVE DASHBOARD WIDGET ============ */
+  .dash-widget { background:linear-gradient(135deg,rgba(235,0,40,.12),rgba(168,85,247,.08)); border:1px solid rgba(235,0,40,.35); border-radius:20px; padding:22px; backdrop-filter:blur(15px); }
+  .dash-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .dash-header h3 { font-size:17px; font-weight:900; }
+  .dash-token { font-size:10px; color:#aaa; font-family:monospace; padding:4px 10px; background:rgba(255,255,255,.06); border-radius:8px; }
+
+  .dash-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+  .dash-stat { background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:14px; text-align:center; }
+  .dash-stat .n { font-size:22px; font-weight:900; color:#eb0028; }
+  .dash-stat .l { font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-top:4px; }
+
+  .dash-reward { background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(235,0,40,.12)); border:1px solid rgba(245,158,11,.4); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .dash-reward h4 { font-size:14px; font-weight:900; color:#fbbf24; margin-bottom:8px; }
+  .dash-reward .txt { font-size:12px; color:#fcd34d; line-height:1.6; margin-bottom:10px; }
+  .progress-bar { height:10px; background:rgba(0,0,0,.5); border-radius:5px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:5px; transition:width .5s; }
+  .prog-label { font-size:11px; color:#fcd34d; margin-top:6px; font-weight:700; text-align:center; }
+
+  .dash-ref { background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.35); border-radius:14px; padding:16px; }
+  .dash-ref h4 { font-size:14px; font-weight:900; color:#22c55e; margin-bottom:8px; }
+  .ref-input { background:rgba(0,0,0,.4); border:1px dashed rgba(34,197,94,.4); border-radius:10px; padding:10px 12px; font-size:11px; font-family:monospace; color:#22c55e; word-break:break-all; margin:10px 0; }
+  .ref-btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .ref-btn { padding:9px 14px; background:#22c55e; color:#000; border:none; border-radius:9px; font-weight:800; font-size:11px; cursor:pointer; font-family:inherit; transition:transform .2s; }
+  .ref-btn:hover { transform:scale(1.05); }
+  .ref-btn.whatsapp { background:#25d366; color:#fff; }
+  .ref-btn.telegram { background:#0088cc; color:#fff; }
+  .ref-count { text-align:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(34,197,94,.25); }
+  .ref-count .n { font-size:24px; font-weight:900; color:#22c55e; }
+  .ref-count .l { font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px; }
+
+  .dash-orders { margin-top:14px; }
+  .dash-order { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap:8px; }
+  .dash-order .info { flex:1; }
+  .dash-order .oid { color:#eb0028; font-weight:800; font-size:11px; }
+  .dash-order .otxt { color:#bbb; font-size:11px; margin-top:2px; }
+  .badge { font-size:9px; padding:3px 8px; border-radius:8px; font-weight:800; text-transform:uppercase; flex-shrink:0; }
+  .badge.approved { background:rgba(34,197,94,.15); color:#22c55e; }
+  .badge.pending { background:rgba(245,158,11,.15); color:#f59e0b; }
+  .badge.rejected { background:rgba(239,68,68,.15); color:#ef4444; }
+
+  .empty-box { text-align:center; color:#aaa; padding:20px; font-size:13px; }
 
   .live-stats { position:fixed; bottom:0; left:0; right:0; z-index:50; padding:10px 18px; background:rgba(8,8,8,.9); backdrop-filter:blur(20px); border-top:1px solid var(--border); }
   .live-stats-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:24px; flex-wrap:wrap; }
@@ -169,8 +188,6 @@
   .wait-step.active { color:#fff; font-weight:600; }
   .wait-btn { display:inline-block; padding:12px 24px; background:rgba(255,255,255,.08); color:#fff; text-decoration:none; border-radius:10px; font-weight:800; font-size:12px; border:1px solid var(--border); transition:all .3s; cursor:pointer; }
   .wait-btn:hover { background:rgba(255,255,255,.15); }
-  .reward-note { background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(235,0,40,.1)); border:1px solid rgba(245,158,11,.3); border-radius:12px; padding:12px; margin-bottom:16px; font-size:12px; color:#fcd34d; line-height:1.6; text-align:center; }
-  .reward-note b { color:#fbbf24; }
 
   footer { max-width:1100px; margin:0 auto; padding:40px 20px 110px; text-align:center; }
   .foot-brand { font-size:22px; font-weight:900; margin-bottom:10px; }
@@ -183,9 +200,10 @@
     .section { padding:30px 16px 60px; }
     nav { padding:10px 16px; }
     .nav-btn { padding:7px 12px; font-size:10px; }
-    .app { padding:14px 8px; }
-    .app-img { width:50px; height:50px; font-size:24px; }
-    .app-name { font-size:10px; }
+    .apps { grid-template-columns:repeat(4,1fr); gap:8px; }
+    .app { padding:12px 6px; }
+    .app-img { width:44px; height:44px; font-size:20px; }
+    .app-name { font-size:9px; }
     .modal-head, .modal-body { padding:16px 18px; }
     .qr-img { width:130px; height:130px; }
   }
@@ -220,7 +238,7 @@
     <img src="/static/logo.png" alt="OnePlus" onerror="this.src='/static/app_starplus.png'">
   </div>
   <h1>Premium Keys. <span class="red">Never Settle.</span></h1>
-  <p>India's fastest premium key store. 3 apps available. Instant delivery via UPI.</p>
+  <p>India's fastest premium key store. 4 apps available. Instant delivery via UPI.</p>
   <div class="trust-badges">
     <span class="tb">⚡ Instant Delivery</span>
     <span class="tb">🔒 Secure UPI</span>
@@ -230,6 +248,48 @@
   <div class="hero-cta">
     <a class="btn-red" href="#shop">🛒 START SHOPPING</a>
     <a class="btn-outline" href="https://t.me/BT_TIGER23" target="_blank">💬 SUPPORT</a>
+  </div>
+</section>
+
+<!-- ============ MY DASHBOARD (LIVE) ============ -->
+<section class="section" id="myDashboard" style="display:none;">
+  <div class="section-head reveal">
+    <div class="eyebrow">MY DASHBOARD</div>
+    <h2>Your <span class="red">Account</span></h2>
+    <p>Orders, rewards, aur referral — sab yahan</p>
+  </div>
+
+  <div class="dash-widget reveal">
+    <div class="dash-header">
+      <h3>👤 Customer Dashboard</h3>
+      <div class="dash-token" id="myToken">—</div>
+    </div>
+
+    <div class="dash-stats" id="dashStats"></div>
+
+    <div class="dash-reward">
+      <h4>🎁 REWARD PROGRAM</h4>
+      <div class="txt" id="dashRewardText">—</div>
+      <div class="progress-bar"><div class="progress-fill" id="dashRewardFill" style="width:0%;"></div></div>
+      <div class="prog-label" id="dashRewardLabel">—</div>
+    </div>
+
+    <div class="dash-ref">
+      <h4>🤝 REFER & EARN</h4>
+      <p style="font-size:12px;color:#a4d9b5;line-height:1.6;">Apna link share karo — dost order kare to reward milega!</p>
+      <div class="ref-input" id="myRefLink">—</div>
+      <div class="ref-btns">
+        <button class="ref-btn" onclick="copyRefLink()">📋 Copy</button>
+        <button class="ref-btn whatsapp" onclick="shareWA()">💬 WhatsApp</button>
+        <button class="ref-btn telegram" onclick="shareTG()">✈️ Telegram</button>
+      </div>
+      <div class="ref-count">
+        <div class="n" id="myRefCount">0</div>
+        <div class="l">Referrals Joined</div>
+      </div>
+    </div>
+
+    <div class="dash-orders" id="myOrders"></div>
   </div>
 </section>
 
@@ -283,29 +343,6 @@
       </button>
     </div>
     {% endfor %}
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-head reveal">
-    <div class="eyebrow">REWARDS & REFERRALS</div>
-    <h2>Buy More, Get <span class="red">FREE Keys!</span></h2>
-    <p>5 orders = 1 Day FREE | Refer karo = Reward pao</p>
-  </div>
-
-  <div class="reward-grid reveal">
-    <div class="reward-box gold">
-      <div class="ico">🎁</div>
-      <div class="ttl">REWARD PROGRAM</div>
-      <div class="desc"><b>5 orders</b> complete karo →<br><b style="font-size:16px;">1 Day FREE key</b> milegi!</div>
-      <div class="small">Auto reward — koi form nahi</div>
-    </div>
-    <div class="reward-box green">
-      <div class="ico">🤝</div>
-      <div class="ttl">REFER & EARN</div>
-      <div class="desc">Dost ko bhejo →<br><b style="font-size:16px;">Reward pao!</b></div>
-      <div class="small">Apna link dashboard me</div>
-    </div>
   </div>
 </section>
 
@@ -391,19 +428,16 @@
       <div style="font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px; font-weight:700;">🔑 Tumhari Key</div>
       <div id="keyText" style="font-family:monospace; font-size:16px; font-weight:900; color:#22c55e; margin-top:6px; word-break:break-all; text-align:center;"></div>
     </div>
-    <div id="rewardNote" class="reward-note" style="display:none;">
-      🎁 <b>Reward Program:</b> 5 orders complete karo → <b>1 Day FREE key!</b>
-    </div>
     <button class="wait-btn" onclick="checkOrderStatus()" style="cursor:pointer;">🔄 Check Status</button>
     <br><br>
-    <a class="wait-btn" href="/dashboard?token=" id="dashboardLink" style="display:none;">📊 My Dashboard</a>
-    <a class="wait-btn" href="https://t.me/BT_TIGER23" target="_blank" style="margin-top:8px; display:inline-block;">💬 Support</a>
+    <a class="wait-btn" href="https://t.me/BT_TIGER23" target="_blank">💬 Support</a>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+/* ============ VIDEO AUTOPLAY ============ */
 document.addEventListener('DOMContentLoaded', () => {
   const v = document.getElementById('bgVideo');
   if (v) {
@@ -413,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+/* ============ LIVE COUNTERS ============ */
 function updateCounters(){
   const h = new Date().getHours();
   const base = (h>=18&&h<=23)?180:(h>=12)?120:80;
@@ -427,22 +462,94 @@ function updateCounters(){
 updateCounters();
 setInterval(updateCounters, 5000);
 
+/* ============ THEME ROTATE ============ */
 const THEMES = ['theme-1','theme-2','theme-3','theme-4','theme-5'];
 let currentThemeIdx = 0;
-function applyTheme(idx){
-  document.body.classList.remove(...THEMES);
-  document.body.classList.add(THEMES[idx]);
-}
 setInterval(() => {
+  document.body.classList.remove(...THEMES);
   currentThemeIdx = (currentThemeIdx + 1) % THEMES.length;
-  applyTheme(currentThemeIdx);
+  document.body.classList.add(THEMES[currentThemeIdx]);
 }, 5 * 60 * 1000);
 
+/* ============ REFERRAL CAPTURE ============ */
 const urlParams = new URLSearchParams(window.location.search);
-const referredBy = urlParams.get('ref') || '';
-if (referredBy) localStorage.setItem('referred_by', referredBy);
+const refFromUrl = urlParams.get('ref') || '';
+if (refFromUrl) localStorage.setItem('referred_by', refFromUrl);
 
+/* ============ DASHBOARD ============ */
+let myToken = localStorage.getItem('my_token') || '';
+let currentPlan = null;
+let currentOrderId = null;
 let selectedApp = null;
+
+async function loadMyDashboard() {
+  if (!myToken) {
+    document.getElementById('myDashboard').style.display = 'none';
+    return;
+  }
+  document.getElementById('myDashboard').style.display = 'block';
+  document.getElementById('myToken').textContent = myToken;
+
+  try {
+    const res = await fetch('/api/dashboard/' + myToken);
+    const d = await res.json();
+    if (!d.ok) return;
+
+    const s = d.stats;
+    document.getElementById('dashStats').innerHTML = `
+      <div class="dash-stat"><div class="n">${s.total_orders}</div><div class="l">Orders</div></div>
+      <div class="dash-stat"><div class="n">₹${s.total_spent}</div><div class="l">Spent</div></div>
+      <div class="dash-stat"><div class="n">${s.referrals}</div><div class="l">Referrals</div></div>
+      <div class="dash-stat"><div class="n">${s.rewards_earned}</div><div class="l">Rewards</div></div>
+    `;
+
+    const prog = s.reward_progress;
+    const pct = (prog / 5) * 100;
+    document.getElementById('dashRewardText').innerHTML = `Tumne <b>${prog}/5</b> orders complete kiye. <b>${s.next_reward_in}</b> aur order karo → <b>1 Day FREE key!</b>`;
+    document.getElementById('dashRewardFill').style.width = pct + '%';
+    document.getElementById('dashRewardLabel').textContent = `Progress: ${prog}/5`;
+
+    const refLink = window.location.origin + '/?ref=' + myToken;
+    document.getElementById('myRefLink').textContent = refLink;
+    document.getElementById('myRefCount').textContent = s.referrals;
+
+    const ol = document.getElementById('myOrders');
+    if (!d.orders.length) {
+      ol.innerHTML = '<div class="empty-box">📭 Abhi koi order nahi</div>';
+    } else {
+      ol.innerHTML = d.orders.map(o => {
+        const badge = o.status === 'approved' ? 'approved' : (o.status === 'pending' ? 'pending' : 'rejected');
+        return `<div class="dash-order">
+          <div class="info">
+            <div class="oid">Order #${o.id} — ${o.app}</div>
+            <div class="otxt">${o.plan} · ₹${o.price}</div>
+          </div>
+          <span class="badge ${badge}">${o.status}</span>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { console.log('Dashboard load error:', e); }
+}
+loadMyDashboard();
+
+/* ============ SHARE ============ */
+function copyRefLink() {
+  if (!myToken) { showToast('❌ Pehle ek order karo', true); return; }
+  const link = window.location.origin + '/?ref=' + myToken;
+  navigator.clipboard.writeText(link).then(() => showToast('✅ Link copy ho gaya!')).catch(() => prompt('Copy:', link));
+}
+function shareWA() {
+  if (!myToken) { showToast('❌ Pehle ek order karo', true); return; }
+  const link = window.location.origin + '/?ref=' + myToken;
+  window.open('https://wa.me/?text=' + encodeURIComponent('🔥 OnePlus Store — Premium Keys!\nInstant delivery, best prices.\n' + link), '_blank');
+}
+function shareTG() {
+  if (!myToken) { showToast('❌ Pehle ek order karo', true); return; }
+  const link = window.location.origin + '/?ref=' + myToken;
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('🔥 OnePlus Store — Premium Keys!'), '_blank');
+}
+
+/* ============ APP SELECT ============ */
 function selectApp(key, name, color){
   selectedApp = { key, name, color };
   const grid = document.getElementById('planGrid');
@@ -453,20 +560,13 @@ function selectApp(key, name, color){
     if (a.dataset.app === key) a.classList.add('active');
   });
   document.querySelectorAll('.plan').forEach(p => p.style.setProperty('--app-color', color));
-  document.getElementById('selectedAppLabel').innerHTML = '<span style="color:' + color + ';font-weight:800;">' + name + '</span> selected — ab plan choose karo';
+  document.getElementById('selectedAppLabel').innerHTML = '<span style="color:' + color + ';font-weight:800;">' + name + '</span> selected';
   setTimeout(() => grid.scrollIntoView({behavior:'smooth', block:'start'}), 200);
 }
 
-let currentPlan = null;
-let currentOrderId = null;
-let currentUserToken = null;
-
+/* ============ ORDER ============ */
 function openOrder(planKey, planName, price, days){
-  if (!selectedApp){
-    showToast('⚠️ Pehle upar se app select karo!', true);
-    document.getElementById('appSelector').scrollIntoView({behavior:'smooth'});
-    return;
-  }
+  if (!selectedApp){ showToast('⚠️ Pehle app select karo!', true); return; }
   currentPlan = { key: planKey, name: planName, price, days };
   document.getElementById('modalTitle').textContent = selectedApp.name + ' — ' + planName;
   document.getElementById('mAppPlan').textContent = selectedApp.name + ' · ' + planName + ' · ' + days;
@@ -475,7 +575,6 @@ function openOrder(planKey, planName, price, days){
   document.getElementById('orderModal').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
-
 function closeOrder(){
   document.getElementById('orderModal').classList.remove('show');
   document.body.style.overflow = '';
@@ -490,20 +589,18 @@ async function submitOrder(e){
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ PROCESSING...';
   const utr = document.getElementById('fUtr').value.trim();
-  const fileInput = document.getElementById('fScreenshot');
-  const file = fileInput.files[0];
-  if (utr.length < 10){ showToast('❌ UTR min 10 characters', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
-  if (!file){ showToast('❌ Payment screenshot upload karo', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
-  if (file.size > 5 * 1024 * 1024){ showToast('❌ Image 5MB se badi', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
+  const file = document.getElementById('fScreenshot').files[0];
+  if (utr.length < 10){ showToast('❌ UTR min 10', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
+  if (!file){ showToast('❌ Screenshot upload karo', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
+  if (file.size > 5*1024*1024){ showToast('❌ Image 5MB se badi', true); btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; return; }
 
   const reader = new FileReader();
   reader.onload = async (ev) => {
-    const screenshot_b64 = ev.target.result;
     const payload = {
       app: selectedApp.key, plan: currentPlan.key,
       name: document.getElementById('fName').value.trim(),
       contact: document.getElementById('fContact').value.trim(),
-      utr: utr, screenshot: screenshot_b64,
+      utr: utr, screenshot: ev.target.result,
       referred_by: localStorage.getItem('referred_by') || ''
     };
     try {
@@ -514,24 +611,16 @@ async function submitOrder(e){
       const data = await res.json();
       if (data.ok){
         currentOrderId = data.order_id;
-        currentUserToken = data.user_token;
+        if (data.user_token) { localStorage.setItem('my_token', data.user_token); myToken = data.user_token; }
         closeOrder();
         document.getElementById('waitOrderId').textContent = 'Order #' + data.order_id;
-        document.getElementById('rewardNote').style.display = 'block';
-        const dl = document.getElementById('dashboardLink');
-        dl.href = '/dashboard?token=' + currentUserToken;
-        dl.style.display = 'inline-block';
         document.getElementById('waitScreen').classList.add('show');
         document.body.style.overflow = 'hidden';
         setTimeout(checkOrderStatus, 3000);
-      } else {
-        showToast('❌ ' + (data.error || 'Failed'), true);
-      }
-    } catch (err){
-      showToast('❌ Network error', true);
-    } finally {
-      btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER';
-    }
+        setTimeout(loadMyDashboard, 4000);
+      } else { showToast('❌ ' + (data.error || 'Failed'), true); }
+    } catch (err){ showToast('❌ Network error', true); }
+    finally { btn.disabled = false; btn.textContent = '✓ CONFIRM ORDER'; }
   };
   reader.readAsDataURL(file);
 }
@@ -547,15 +636,11 @@ function checkOrderStatus(){
         document.getElementById('keyText').textContent = d.key;
         document.querySelectorAll('.wait-step').forEach(el => el.classList.add('active'));
         showToast('🎉 Key mil gayi!');
-      } else if (d.status === 'rejected'){
-        showToast('❌ Order reject ho gaya', true);
-      }
+      } else if (d.status === 'rejected'){ showToast('❌ Order reject', true); }
     });
 }
 setInterval(() => {
-  if (document.getElementById('waitScreen').classList.contains('show') && currentOrderId){
-    checkOrderStatus();
-  }
+  if (document.getElementById('waitScreen').classList.contains('show') && currentOrderId) checkOrderStatus();
 }, 5000);
 
 function showToast(msg, isError){
