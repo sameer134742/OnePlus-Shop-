@@ -56,7 +56,8 @@ def init_db():
         name TEXT, contact TEXT, utr TEXT UNIQUE,
         screenshot TEXT, risk_score INTEGER DEFAULT 0,
         risk_reason TEXT, status TEXT DEFAULT 'pending',
-        key_given TEXT, created_at TEXT, approved_at TEXT)""")
+        key_given TEXT, created_at TEXT, approved_at TEXT,
+        user_token TEXT, referred_by TEXT)""")
     con.commit(); con.close()
 
 
@@ -112,6 +113,7 @@ def create_order():
         contact = (d.get("contact") or "").strip()
         utr = (d.get("utr") or "").strip()
         screenshot_data = d.get("screenshot") or ""
+        referred_by = (d.get("referred_by") or "").strip()
 
         if app_key not in APPS: return jsonify({"ok": False, "error": "App select karo"}), 400
         if plan_key not in PLANS: return jsonify({"ok": False, "error": "Plan select karo"}), 400
@@ -139,16 +141,20 @@ def create_order():
             con.close()
             return jsonify({"ok": False, "error": "UTR already used"}), 400
 
+        # Generate unique user token (based on contact for tracking)
+        user_token = "U" + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+
         score, reason = calc_risk(utr, name, contact, screenshot_filename)
         plan = PLANS[plan_key]
         c.execute("""INSERT INTO orders(app,plan,price,name,contact,utr,screenshot,
-                     risk_score,risk_reason,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                     risk_score,risk_reason,status,created_at,user_token,referred_by)
+                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                   (app_key, plan_key, plan["price"], name, contact, utr,
                    screenshot_filename, score, reason, "pending",
-                   datetime.now().isoformat()))
+                   datetime.now().isoformat(), user_token, referred_by))
         oid = c.lastrowid
         con.commit(); con.close()
-        return jsonify({"ok": True, "order_id": oid, "risk": score})
+        return jsonify({"ok": True, "order_id": oid, "risk": score, "user_token": user_token})
     except Exception as ex:
         return jsonify({"ok": False, "error": str(ex)}), 500
 
@@ -162,6 +168,60 @@ def order_status(oid):
     return jsonify({"ok": True, "status": row[0], "key": row[1]})
 
 
+# ==================== DASHBOARD (Customer Profile) ====================
+@app.route("/dashboard")
+def dashboard():
+    token = request.args.get("token", "")
+    return render_template("dashboard.html", token=token,
+        brand=BRAND_NAME, support=SUPPORT)
+
+
+@app.route("/api/dashboard/<token>")
+def api_dashboard(token):
+    con = db(); c = con.cursor()
+    c.execute("""SELECT id, app, plan, price, name, status, created_at, key_given
+                 FROM orders WHERE user_token=? ORDER BY id DESC""", (token,))
+    rows = c.fetchall()
+
+    # Total stats
+    c.execute("""SELECT COUNT(*), SUM(price) FROM orders
+                 WHERE user_token=? AND status='approved'""", (token,))
+    stat = c.fetchone()
+    total_orders = stat[0] or 0
+    total_spent = stat[1] or 0
+
+    # Referral count
+    c.execute("SELECT COUNT(*) FROM orders WHERE referred_by=?", (token,))
+    referrals = c.fetchone()[0] or 0
+
+    con.close()
+
+    # Reward calculation
+    orders_for_reward = total_orders
+    reward_progress = orders_for_reward % 5
+    rewards_earned = orders_for_reward // 5
+    next_reward_in = 5 - reward_progress
+
+    return jsonify({
+        "ok": True,
+        "orders": [
+            {
+                "id": r[0], "app": r[1], "plan": r[2], "price": r[3],
+                "name": r[4], "status": r[5], "created_at": r[6], "key": r[7]
+            } for r in rows
+        ],
+        "stats": {
+            "total_orders": total_orders,
+            "total_spent": total_spent,
+            "referrals": referrals,
+            "rewards_earned": rewards_earned,
+            "reward_progress": reward_progress,
+            "next_reward_in": next_reward_in
+        }
+    })
+
+
+# ==================== ADMIN ====================
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":

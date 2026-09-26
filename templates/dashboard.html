@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard — {{ brand }}</title>
+<link rel="icon" type="image/png" href="/static/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+  body { background:#000; color:#fff; padding:16px; min-height:100vh; padding-bottom:60px; }
+  .wrap { max-width:800px; margin:0 auto; }
+  .head { display:flex; align-items:center; justify-content:space-between; padding:14px 0; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,.1); }
+  .head h1 { font-size:18px; font-weight:900; }
+  .head h1 .red { color:#eb0028; }
+  .back { padding:7px 14px; background:rgba(255,255,255,.05); color:#fff; text-decoration:none; border-radius:8px; font-size:11px; font-weight:800; border:1px solid rgba(255,255,255,.15); }
+
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+  .stat { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; text-align:center; }
+  .stat .num { font-size:24px; font-weight:900; color:#eb0028; }
+  .stat .lbl { font-size:10px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+
+  .reward-card { background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(235,0,40,.1)); border:1px solid rgba(245,158,11,.35); border-radius:16px; padding:20px; margin-bottom:16px; }
+  .reward-card h2 { font-size:15px; font-weight:900; color:#fbbf24; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .reward-card .progress-text { font-size:13px; color:#fcd34d; margin-bottom:12px; line-height:1.6; }
+  .progress-bar { height:12px; background:rgba(0,0,0,.5); border-radius:6px; overflow:hidden; margin-bottom:8px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); transition:width .5s; border-radius:6px; }
+  .progress-label { font-size:11px; color:#fcd34d; text-align:center; font-weight:700; }
+
+  .referral-card { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.25); border-radius:16px; padding:20px; margin-bottom:16px; }
+  .referral-card h2 { font-size:15px; font-weight:900; color:#22c55e; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .ref-link-box { background:rgba(0,0,0,.4); border:1px dashed rgba(34,197,94,.35); border-radius:10px; padding:12px; margin:12px 0; font-size:11px; font-family:monospace; word-break:break-all; color:#22c55e; }
+  .ref-stats { display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid rgba(34,197,94,.2); }
+  .ref-stat { text-align:center; flex:1; }
+  .ref-stat .n { font-size:20px; font-weight:900; color:#22c55e; }
+  .ref-stat .l { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; }
+  .copy-btn { background:#22c55e; color:#000; border:none; padding:8px 16px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer; margin-top:8px; font-family:inherit; }
+
+  .section { background:#0d0d0d; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .section h2 { font-size:15px; font-weight:900; margin-bottom:14px; }
+  .order { background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .order-top { display:flex; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .order-id { font-size:12px; font-weight:900; color:#eb0028; }
+  .order-app { font-size:10px; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .badge { font-size:9px; padding:3px 8px; border-radius:10px; font-weight:800; text-transform:uppercase; }
+  .badge.approved { background:rgba(34,197,94,.15); color:#22c55e; }
+  .badge.pending { background:rgba(245,158,11,.15); color:#f59e0b; }
+  .badge.rejected { background:rgba(239,68,68,.15); color:#ef4444; }
+  .order-row { display:flex; justify-content:space-between; font-size:12px; color:#bbb; padding:2px 0; }
+  .key-display { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.25); border-radius:8px; padding:8px 10px; margin-top:8px; font-family:monospace; font-size:12px; color:#22c55e; word-break:break-all; text-align:center; font-weight:800; }
+
+  .empty { text-align:center; color:#666; padding:24px; font-size:13px; }
+  .loading { text-align:center; color:#666; padding:40px; }
+
+  @media (min-width:600px) { .stats { grid-template-columns:repeat(4,1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="head">
+  <h1>📊 MY <span class="red">DASHBOARD</span></h1>
+  <a class="back" href="/">← Home</a>
+</div>
+
+<div id="loading" class="loading">⏳ Loading...</div>
+
+<div id="content" style="display:none;">
+  <div class="stats" id="statsGrid"></div>
+
+  <div class="reward-card" id="rewardCard">
+    <h2>🎁 REWARD PROGRAM</h2>
+    <div class="progress-text" id="rewardText">—</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="rewardFill" style="width:0%;"></div>
+    </div>
+    <div class="progress-label" id="rewardLabel">—</div>
+  </div>
+
+  <div class="referral-card">
+    <h2>🤝 REFER & EARN</h2>
+    <p style="font-size:12px;color:#a4d9b5;line-height:1.6;">Apna link share karo. Har naya customer order karega to tumhe reward milega!</p>
+    <div class="ref-link-box" id="refLink">—</div>
+    <button class="copy-btn" onclick="copyRef()">📋 COPY LINK</button>
+    <div class="ref-stats">
+      <div class="ref-stat"><div class="n" id="refCount">0</div><div class="l">Referrals</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📦 My Orders</h2>
+    <div id="ordersList"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const TOKEN = "{{ token }}";
+
+async function loadData() {
+  if (!TOKEN) {
+    document.getElementById('loading').innerHTML = '❌ Token missing. <a href="/" style="color:#eb0028;">Home jao</a>';
+    return;
+  }
+  try {
+    const res = await fetch('/api/dashboard/' + TOKEN);
+    const d = await res.json();
+    if (!d.ok) throw new Error('Failed');
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    // Stats
+    const s = d.stats;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat"><div class="num">${s.total_orders}</div><div class="lbl">Orders</div></div>
+      <div class="stat"><div class="num">₹${s.total_spent}</div><div class="lbl">Spent</div></div>
+      <div class="stat"><div class="num">${s.referrals}</div><div class="lbl">Referrals</div></div>
+      <div class="stat"><div class="num">${s.rewards_earned}</div><div class="lbl">Rewards</div></div>
+    `;
+
+    // Reward
+    const prog = s.reward_progress;
+    const pct = (prog / 5) * 100;
+    document.getElementById('rewardText').innerHTML = `Tumne <b>${prog}/5</b> orders complete kiye. <b>${s.next_reward_in}</b> aur order karo → <b>1 Day FREE key!</b>`;
+    document.getElementById('rewardFill').style.width = pct + '%';
+    document.getElementById('rewardLabel').textContent = `Progress: ${prog}/5`;
+
+    // Referral
+    const refLink = window.location.origin + '/?ref=' + TOKEN;
+    document.getElementById('refLink').textContent = refLink;
+    document.getElementById('refCount').textContent = s.referrals;
+
+    // Orders
+    const ol = document.getElementById('ordersList');
+    if (!d.orders.length) {
+      ol.innerHTML = '<div class="empty">📭 Abhi koi order nahi. Shopping start karo!</div>';
+    } else {
+      ol.innerHTML = d.orders.map(o => {
+        const badge = o.status === 'approved' ? 'approved' : (o.status === 'pending' ? 'pending' : 'rejected');
+        const keyHtml = o.key ? `<div class="key-display">🔑 ${o.key}</div>` : '';
+        return `
+          <div class="order">
+            <div class="order-top">
+              <span class="order-id">Order #${o.id}</span>
+              <span class="badge ${badge}">${o.status}</span>
+            </div>
+            <div class="order-row"><span>${o.app} · ${o.plan}</span><b>₹${o.price}</b></div>
+            <div class="order-row"><span>Date</span><span>${o.created_at.split('T')[0]}</span></div>
+            ${keyHtml}
+          </div>
+        `;
+      }).join('');
+    }
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '❌ Error loading dashboard';
+  }
+}
+
+function copyRef() {
+  const link = document.getElementById('refLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    alert('✅ Link copy ho gaya! Ab share karo.');
+  }).catch(() => {
+    alert('Copy manually: ' + link);
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>
