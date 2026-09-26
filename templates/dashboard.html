@@ -21,14 +21,14 @@
   .stat .lbl { font-size:10px; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
 
   .reward-card { background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(235,0,40,.1)); border:1px solid rgba(245,158,11,.35); border-radius:16px; padding:20px; margin-bottom:16px; }
-  .reward-card h2 { font-size:15px; font-weight:900; color:#fbbf24; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
-  .reward-card .progress-text { font-size:13px; color:#fcd34d; margin-bottom:12px; line-height:1.6; }
+  .reward-card h2 { font-size:15px; font-weight:900; color:#fbbf24; margin-bottom:10px; }
+  .progress-text { font-size:13px; color:#fcd34d; margin-bottom:12px; line-height:1.6; }
   .progress-bar { height:12px; background:rgba(0,0,0,.5); border-radius:6px; overflow:hidden; margin-bottom:8px; }
   .progress-fill { height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); transition:width .5s; border-radius:6px; }
   .progress-label { font-size:11px; color:#fcd34d; text-align:center; font-weight:700; }
 
   .referral-card { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.25); border-radius:16px; padding:20px; margin-bottom:16px; }
-  .referral-card h2 { font-size:15px; font-weight:900; color:#22c55e; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .referral-card h2 { font-size:15px; font-weight:900; color:#22c55e; margin-bottom:10px; }
   .ref-link-box { background:rgba(0,0,0,.4); border:1px dashed rgba(34,197,94,.35); border-radius:10px; padding:12px; margin:12px 0; font-size:11px; font-family:monospace; word-break:break-all; color:#22c55e; }
   .ref-stats { display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid rgba(34,197,94,.2); }
   .ref-stat { text-align:center; flex:1; }
@@ -68,12 +68,10 @@
 <div id="content" style="display:none;">
   <div class="stats" id="statsGrid"></div>
 
-  <div class="reward-card" id="rewardCard">
+  <div class="reward-card">
     <h2>🎁 REWARD PROGRAM</h2>
     <div class="progress-text" id="rewardText">—</div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="rewardFill" style="width:0%;"></div>
-    </div>
+    <div class="progress-bar"><div class="progress-fill" id="rewardFill" style="width:0%;"></div></div>
     <div class="progress-label" id="rewardLabel">—</div>
   </div>
 
@@ -111,7 +109,6 @@ async function loadData() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
 
-    // Stats
     const s = d.stats;
     document.getElementById('statsGrid').innerHTML = `
       <div class="stat"><div class="num">${s.total_orders}</div><div class="lbl">Orders</div></div>
@@ -120,19 +117,16 @@ async function loadData() {
       <div class="stat"><div class="num">${s.rewards_earned}</div><div class="lbl">Rewards</div></div>
     `;
 
-    // Reward
     const prog = s.reward_progress;
     const pct = (prog / 5) * 100;
     document.getElementById('rewardText').innerHTML = `Tumne <b>${prog}/5</b> orders complete kiye. <b>${s.next_reward_in}</b> aur order karo → <b>1 Day FREE key!</b>`;
     document.getElementById('rewardFill').style.width = pct + '%';
     document.getElementById('rewardLabel').textContent = `Progress: ${prog}/5`;
 
-    // Referral
     const refLink = window.location.origin + '/?ref=' + TOKEN;
     document.getElementById('refLink').textContent = refLink;
     document.getElementById('refCount').textContent = s.referrals;
 
-    // Orders
     const ol = document.getElementById('ordersList');
     if (!d.orders.length) {
       ol.innerHTML = '<div class="empty">📭 Abhi koi order nahi. Shopping start karo!</div>';

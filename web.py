@@ -19,8 +19,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 APPS = {
-    "starplus":  {"name": "Star Plus",            "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
-    "oneplus":   {"name": "OnePlus",              "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
+    "starplus":  {"name": "Star Plus",            "icon": "★",  "color": "#a855f7", "img": "app_starplus.png"},
+    "oneplus":   {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
     "admin":     {"name": "OnePlus Admin Server", "icon": "⚙️", "color": "#22c55e", "img": "app_fanloader.png"},
 }
 
@@ -40,7 +40,7 @@ def db():
 def init_db():
     con = db(); c = con.cursor()
     try:
-        c.execute("SELECT risk_score FROM orders LIMIT 1")
+        c.execute("SELECT user_token FROM orders LIMIT 1")
     except:
         c.execute("DROP TABLE IF EXISTS orders")
         c.execute("DROP TABLE IF EXISTS keys")
@@ -141,7 +141,6 @@ def create_order():
             con.close()
             return jsonify({"ok": False, "error": "UTR already used"}), 400
 
-        # Generate unique user token (based on contact for tracking)
         user_token = "U" + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
         score, reason = calc_risk(utr, name, contact, screenshot_filename)
@@ -168,7 +167,6 @@ def order_status(oid):
     return jsonify({"ok": True, "status": row[0], "key": row[1]})
 
 
-# ==================== DASHBOARD (Customer Profile) ====================
 @app.route("/dashboard")
 def dashboard():
     token = request.args.get("token", "")
@@ -182,33 +180,25 @@ def api_dashboard(token):
     c.execute("""SELECT id, app, plan, price, name, status, created_at, key_given
                  FROM orders WHERE user_token=? ORDER BY id DESC""", (token,))
     rows = c.fetchall()
-
-    # Total stats
     c.execute("""SELECT COUNT(*), SUM(price) FROM orders
                  WHERE user_token=? AND status='approved'""", (token,))
     stat = c.fetchone()
     total_orders = stat[0] or 0
     total_spent = stat[1] or 0
-
-    # Referral count
     c.execute("SELECT COUNT(*) FROM orders WHERE referred_by=?", (token,))
     referrals = c.fetchone()[0] or 0
-
     con.close()
 
-    # Reward calculation
-    orders_for_reward = total_orders
-    reward_progress = orders_for_reward % 5
-    rewards_earned = orders_for_reward // 5
-    next_reward_in = 5 - reward_progress
+    reward_progress = total_orders % 5
+    rewards_earned = total_orders // 5
+    next_reward_in = 5 - reward_progress if reward_progress > 0 else 5
 
     return jsonify({
         "ok": True,
         "orders": [
-            {
-                "id": r[0], "app": r[1], "plan": r[2], "price": r[3],
-                "name": r[4], "status": r[5], "created_at": r[6], "key": r[7]
-            } for r in rows
+            {"id": r[0], "app": r[1], "plan": r[2], "price": r[3],
+             "name": r[4], "status": r[5], "created_at": r[6], "key": r[7]}
+            for r in rows
         ],
         "stats": {
             "total_orders": total_orders,
@@ -221,7 +211,6 @@ def api_dashboard(token):
     })
 
 
-# ==================== ADMIN ====================
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
