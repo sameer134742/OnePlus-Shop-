@@ -15,8 +15,8 @@ DB_PATH    = os.path.join(os.path.dirname(__file__), "shop.db")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "admin123"
+ADMIN_USER = "Bt tiger"
+ADMIN_PASS = "Bt tiger11"
 
 APPS = {
     "starplus":  {"name": "OnePlus",              "icon": "1+", "color": "#eb0028", "img": "app_oneplus.png"},
